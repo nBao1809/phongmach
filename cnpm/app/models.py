@@ -53,6 +53,8 @@ class Medication(db.Model):
     price = db.Column(db.Float, nullable=False)
     medication_unit_id = db.Column(db.Integer, ForeignKey("medication_units.id"), nullable=False,index=True)
     medication_consultations = relationship("Medication_consultation", backref="medication_units",lazy=True,cascade="all, delete-orphan")
+    def __str__(self):
+        return self.name
 
 
 class Consultation_form(db.Model):

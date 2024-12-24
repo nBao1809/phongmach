@@ -25,22 +25,34 @@ class MedicationView(AdminView):
     column_searchable_list = ['name']
     column_editable_list = ['name','price']
     can_export = True
+    column_labels = {
+        'name':'Tên thuốc',
+        'price':'Giá bán',
+    }
 
 
 class Medication_unitsView(AdminView):
     column_list = ['unit']
     column_editable_list = ['unit']
+    column_labels = {
+        'unit':'Đơn vị'
+    }
 
 
 class Consultation_feeView(AdminView):
     column_list = ['fee']
     column_editable_list = ['fee']
+    column_labels = {
+        'fee':'Phí khám bệnh'
+    }
 
 
 class DailyPatientLimitView(AdminView):
     column_list = ['max_patients']
     column_editable_list = ['max_patients']
-
+    column_labels = {
+        'max_patients': 'Giới hạn bệnh nhân'
+    }
 
 
 class AuthenticatedView(BaseView):
@@ -55,18 +67,10 @@ class LogoutView(AuthenticatedView):
         return redirect('/admin')
 
 
-# class StatsView(AuthenticatedView):
-#     @expose('/')
-#     def index(self):
-#
-#         return self.render('admin/stats.html',
-#                            stats=dao.revenue_stats_by_products(),
-#                            stats2=dao.revenue_stats_by_time())
 
-
-admin.add_view(MedicationView(Medication, db.session))
-admin.add_view(Medication_unitsView(Medication_units, db.session))
-admin.add_view(Consultation_feeView(Consultation_fee, db.session))
-admin.add_view(DailyPatientLimitView(DailyPatientLimit, db.session))
+admin.add_view(MedicationView(Medication, db.session,name='Thuốc'))
+admin.add_view(Medication_unitsView(Medication_units, db.session,name="Đơn vị"))
+admin.add_view(Consultation_feeView(Consultation_fee, db.session,name="Phí khám bệnh"))
+admin.add_view(DailyPatientLimitView(DailyPatientLimit, db.session,name="Giới hạn bệnh nhân"))
 admin.add_view(AdminView(User, db.session))
 admin.add_view(LogoutView(name='Đăng xuất'))

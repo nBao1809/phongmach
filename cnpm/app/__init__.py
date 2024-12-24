@@ -7,8 +7,7 @@ import cloudinary
 app = Flask(__name__)
 app.secret_key = 'KJHJF^(&*&&*OHH&*%&*TYUGJHG&(T&IUHKB'
 app.config["SQLALCHEMY_DATABASE_URI"] = "mysql+pymysql://root:%s@localhost/phongmachdb?charset=utf8mb4" % quote('admin123')
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = True
-app.config["PAGE_SIZE"] = 8
+
 
 db = SQLAlchemy(app=app)
 login = LoginManager(app=app)
