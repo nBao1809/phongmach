@@ -1,6 +1,161 @@
 {% extends 'layout/base.html' %}
 
 {% block content %}
-<div class="alert alert-info mt-1">KHÔNG có sản phẩm nào!</div>
+<!-- Carousel -->
+<div id="carouselExampleDark" class="carousel carousel-dark slide carousel-custom" data-bs-ride="carousel">
+    <div class="carousel-indicators">
+        <button type="button" data-bs-target="#carouselExampleDark" data-bs-slide-to="0" class="active"
+                aria-current="true" aria-label="Slide 1"></button>
+        <button type="button" data-bs-target="#carouselExampleDark" data-bs-slide-to="1" aria-label="Slide 2"></button>
+        <button type="button" data-bs-target="#carouselExampleDark" data-bs-slide-to="2" aria-label="Slide 3"></button>
+    </div>
+    <div class="carousel-inner">
+        <div class="carousel-item active" data-bs-interval="3000">
+            <img src="https://res.cloudinary.com/dblzpkokm/image/upload/v1735132473/gulw1fdtgdk7brvtzwss.png"
+                 class="d-block w-100" alt="...">
+        </div>
+        <div class="carousel-item" data-bs-interval="3000">
+            <img src="https://res.cloudinary.com/dblzpkokm/image/upload/v1735133258/z1osl9jgcmwfodyt0w40.png"
+                 class="d-block w-100" alt="...">
+        </div>
+        <div class="carousel-item" data-bs-interval="3000">
+            <img src="https://res.cloudinary.com/dblzpkokm/image/upload/v1735133258/drlar0k0d03vplr2mrvp.png"
+                 class="d-block w-100" alt="...">
+        </div>
+    </div>
+    <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleDark" data-bs-slide="prev">
+        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+        <span class="visually-hidden">Previous</span>
+    </button>
+    <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleDark" data-bs-slide="next">
+        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+        <span class="visually-hidden">Next</span>
+    </button>
+</div>
+
+
+<div class="container mt-5">
+    <h2>Chào mừng đến với Phòng mạch Bảo Khang</h2>
+    <p>Tại đây, chúng tôi cung cấp dịch vụ chăm sóc sức khỏe chất lượng cao với đội ngũ bác sĩ chuyên nghiệp và cơ sở
+        vật chất hiện đại. Phòng mạch của chúng tôi cam kết mang lại sự chăm sóc tốt nhất cho bạn và gia đình.</p>
+    <a href="#services" class="btn btn-primary">Khám phá dịch vụ của chúng tôi</a>
+</div>
+
+
+<div class="container mt-5" id="services">
+    <h3>Các dịch vụ chúng tôi cung cấp</h3>
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card">
+                <img src="https://res.cloudinary.com/dblzpkokm/image/upload/v1735138238/wsd6d3uok6selonbas2i.jpg"
+                     class="card-img-top" alt="Dịch vụ 1">
+                <div class="card-body">
+                    <h5 class="card-title">Khám bệnh tổng quát</h5>
+                    <p class="card-text">Việc kiểm tra định kỳ sẽ giúp phát hiện sớm các vấn đề sức khỏe tiềm ẩn, từ đó
+                        có phương án điều trị và phòng ngừa
+                        kịp thời</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <img src="https://res.cloudinary.com/dblzpkokm/image/upload/v1735138549/ip8rck8ljqugkyxxutus.png"
+                     class="card-img-top" alt="Dịch vụ 2">
+                <div class="card-body">
+                    <h5 class="card-title">Đặt lịch khám</h5>
+                    <p class="card-text">Hãy liên hệ với chúng tôi để đặt lịch khám với các bác sĩ chuyên môn, đảm bảo
+                        bạn nhận được sự chăm sóc tốt nhất cho sức khỏe của mình.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <img src="https://res.cloudinary.com/dblzpkokm/image/upload/v1735138702/jdo0n6zzps8lcbq8aoc4.webp"
+                     class="card-img-top" alt="Dịch vụ 3">
+                <div class="card-body">
+                    <h5 class="card-title">Điều trị các bệnh mạn tính</h5>
+                    <p class="card-text">Chúng tôi cung cấp các dịch vụ điều trị và quản lý các bệnh mãn tính như tiểu
+                        đường, huyết áp cao, và các bệnh lý tim mạch.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="container mt-5">
+    <h3>Đội ngũ bác sĩ chuyên nghiệp</h3>
+    <p>Đội ngũ bác sĩ tại phòng khám của chúng tôi là những người có nhiều năm kinh nghiệm và luôn tận tâm với nghề. Mỗi
+        bác sĩ đều có chuyên môn sâu rộng trong các lĩnh vực khác nhau, giúp bạn nhận được sự chăm sóc tốt nhất.</p>
+    <div class="row">
+        <div class="col-md-4">
+            <div class="card">
+                <img src="https://res.cloudinary.com/dblzpkokm/image/upload/v1735139257/t497o2eadlapbga9ifbf.jpg" class="card-img-top" alt="Bác sĩ 1">
+                <div class="card-body">
+                    <h5 class="card-title">Bác sĩ Nguyễn Thị A</h5>
+                    <p class="card-text">Chuyên gia về nội khoa và chăm sóc sức khỏe tổng quát.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <img src="https://res.cloudinary.com/dblzpkokm/image/upload/v1735139258/bv0mt0egppas9bb0ffys.png" class="card-img-top" alt="Bác sĩ 2">
+                <div class="card-body">
+                    <h5 class="card-title">Bác sĩ Lê Văn B</h5>
+                    <p class="card-text">Chuyên gia về tâm lý và chăm sóc sức khỏe tinh thần.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card">
+                <img src="https://res.cloudinary.com/dblzpkokm/image/upload/v1735139258/aibvtrjaykbtpuk7essk.png" class="card-img-top" alt="Bác sĩ 3">
+                <div class="card-body">
+                    <h5 class="card-title">Trần Văn C</h5>
+                    <p class="card-text">Chuyên gia về điều trị bệnh mạn tính và các bệnh lý tim mạch.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="container mt-5">
+    <h3>Liên hệ với chúng tôi</h3>
+    <p>Nếu bạn có bất kỳ câu hỏi nào hoặc cần đặt lịch hẹn, vui lòng liên hệ với chúng tôi qua các phương thức sau:</p>
+    <ul class="contact-list">
+        <li><a href="tel:+1234567890" class="contact-link"><i class="bi bi-telephone-fill"></i> 1234567890</a></li>
+        <li><a href="tel:+0987654321" class="contact-link"><i class="bi bi-telephone-fill"></i> 0987654321</a></li>
+        <li><a href="mailto:contact@phongkhamtu.com" class="contact-link"><i class="bi bi-envelope-fill"></i> contact@phongkhamtu.com</a></li>
+    </ul>
+</div>
+
+
+<div class="container mt-5">
+    <a href="#" class="btn btn-primary btn-floating" data-bs-toggle="modal" data-bs-target="#hotlineModal">
+        <i class="bi bi-telephone-fill"></i>
+    </a>
+</div>
+
+
+<div class="modal fade" id="hotlineModal" tabindex="-1" aria-labelledby="hotlineModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="hotlineModalLabel">Hotline</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <ul>
+                    <li><a href="tel:+1234567890"> 1234567890</a></li>
+                    <li><a href="tel:+0987654321"> 0987654321</a></li>
+                    <li><a href="tel:+1122334455"> 1122334455</a></li>
+                </ul>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 {% endblock %}

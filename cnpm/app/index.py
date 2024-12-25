@@ -1,7 +1,10 @@
-from flask import render_template,request,redirect,url_for,flash
+from datetime import date
+
+from flask import render_template, request, redirect, url_for, flash
 from flask_login import login_user, logout_user, login_required
-from app import app,dao,login
+from app import app, dao, login
 import admin
+
 
 @app.route('/')
 def index():
@@ -27,10 +30,18 @@ def login_process():
 
     return render_template('login.html')
 
+
 @app.route("/logout")
 def logout_process():
     logout_user()
     return redirect('/login')
 
-if __name__=='__main__':
-    app.run(debug=True,port=5001)
+
+@app.route("/datLich")
+def datLich():
+    today = date.today()
+    return render_template('datlich.html',today=today)
+
+
+if __name__ == '__main__':
+    app.run(debug=True, port=5001)

@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Integer, String, Float, Boolean, ForeignKey, Enum, DateTime
 from sqlalchemy.orm import relationship
 from app import db, app
+import hashlib
 from enum import Enum as RoleEnum
 from flask_login import UserMixin
 from datetime import datetime
@@ -99,7 +100,7 @@ if __name__ == '__main__':
     with app.app_context():
         db.create_all()
 
-        import hashlib
+
         # u = User(name='admin', username='admin', password=str(hashlib.md5('123456'.encode('utf-8')).hexdigest()),
         #          user_role=UserEnum.ADMIN)
         # db.session.add(u)
