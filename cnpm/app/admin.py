@@ -1,3 +1,5 @@
+import hashlib
+
 from app.models import Medication, Medication_units, Consultation_fee, User, UserEnum, DailyPatientLimit
 from flask_admin import Admin, BaseView, expose, AdminIndexView
 from app import app, db
@@ -18,6 +20,22 @@ admin = Admin(app=app, name='Phòng mạch', template_mode='bootstrap4', index_v
 class AdminView(ModelView):
     def is_accessible(self):
         return current_user.is_authenticated and current_user.user_role.__eq__(UserEnum.ADMIN)
+
+    def on_model_change(self, form, model, is_created):
+        if is_created:
+            # Nếu đây là một người dùng mới, bạn sẽ hash mật khẩu trước khi lưu
+            if form.password.data:
+                model.password = str(hashlib.md5(form.password.data.encode('utf-8')).hexdigest())
+
+            # Gán vai trò mặc định nếu cần
+            if not model.user_role:
+                model.user_role = UserEnum.USER
+        else:
+            # Nếu người dùng đã tồn tại và thay đổi thông tin, hash lại mật khẩu nếu có thay đổi
+            if form.password.data:
+                model.password = str(hashlib.md5(form.password.data.encode('utf-8')).hexdigest())
+
+        return super().on_model_change(form, model, is_created)
 
 
 class MedicationView(AdminView):

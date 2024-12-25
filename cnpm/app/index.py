@@ -1,7 +1,7 @@
 from flask import render_template,request,redirect
 from flask_login import login_user, logout_user
 from app import app,dao,login
-import admin
+# import admin
 
 @app.route('/')
 def index():
