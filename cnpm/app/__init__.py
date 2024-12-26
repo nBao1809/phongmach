@@ -1,3 +1,4 @@
+import hashlib
 from flask import Flask
 from urllib.parse import quote
 from flask_sqlalchemy import SQLAlchemy
@@ -18,3 +19,5 @@ cloudinary.config(
     api_secret="YanTDoC3S-bHO-i4I9S8G2hBevs",
     secure=True
 )
+
+

@@ -1,10 +1,11 @@
-from sqlalchemy import Column, Integer, String, Float, Boolean, ForeignKey, Enum, DateTime
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Enum, DateTime
 from sqlalchemy.orm import relationship
-from app import db, app
-import hashlib
+from app import db
 from enum import Enum as RoleEnum
 from flask_login import UserMixin
 from datetime import datetime
+import app
+
 
 class UserEnum(RoleEnum):
     ADMIN = "admin"
@@ -30,30 +31,45 @@ class Patient(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.String(50), nullable=False)
     gender = db.Column(db.Enum(GenderEnum), nullable=False)
-    birthday = db.Column(db.DateTime, nullable=False)
+    birthday = db.Column(db.Date, nullable=False)
     sdt = db.Column(db.String(20), nullable=False)
+
+    def toDict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "gender": self.gender.value,
+            "birthday": self.birthday.year,
+            "sdt": self.sdt,
+        }
 
 
 class Medication_units(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     unit = db.Column(db.String(50), nullable=False)
-    medication=relationship("Medication", backref="unit_medications",lazy=True)
+    medication = relationship("Medication", backref="unit_medications", lazy=True)
 
 
 class Appointment_list(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    date = db.Column(db.DateTime, nullable=False)
-    total = db.Column(db.Integer, nullable=False)
-    patient_id = db.Column(db.Integer, ForeignKey("patient.id"), nullable=False,index=True)
+    date = db.Column(db.DateTime, nullable=False, unique=True)
     status = db.Column(db.Boolean, nullable=False)
+
+
+class Patient_Appointment(db.Model):
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    appointment_id = db.Column(db.Integer, db.ForeignKey('appointment_list.id'), nullable=False)
+    patient_id = db.Column(db.Integer, db.ForeignKey('patient.id'), nullable=False)
 
 
 class Medication(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.String(50), nullable=False)
-    price = db.Column(db.Float, nullable=False)
-    medication_unit_id = db.Column(db.Integer, ForeignKey("medication_units.id"), nullable=False,index=True)
-    medication_consultations = relationship("Medication_consultation", backref="medication_units",lazy=True,cascade="all, delete-orphan")
+    price = db.Column(db.Integer, nullable=False)
+    medication_unit_id = db.Column(db.Integer, ForeignKey("medication_units.id"), nullable=False, index=True)
+    medication_consultations = relationship("Medication_consultation", backref="medication_units", lazy=True,
+                                            cascade="all, delete-orphan")
+
     def __str__(self):
         return self.name
 
@@ -61,10 +77,10 @@ class Medication(db.Model):
 class Consultation_form(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     date = db.Column(db.DateTime, nullable=False)
-    patient_id = db.Column(db.Integer, ForeignKey("patient.id"), nullable=False,index=True)
+    patient_id = db.Column(db.Integer, ForeignKey("patient.id"), nullable=False, index=True)
     # chan doan
     diagnosis = db.Column(db.String(255), nullable=False)
-#   trieu chung
+    #   trieu chung
     symptoms = db.Column(db.String(255), nullable=False)
     medication_consultations = relationship("Medication_consultation", backref="consultation")
 
@@ -72,28 +88,22 @@ class Consultation_form(db.Model):
 class Medication_consultation(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     quantity = db.Column(db.Integer, nullable=False)
-    medication_id = db.Column(db.Integer, ForeignKey("medication.id"), nullable=False,index=True)
-    consultation_id = db.Column(db.Integer, ForeignKey("consultation_form.id"), nullable=False,index=True)
+    medication_id = db.Column(db.Integer, ForeignKey("medication.id"), nullable=False, index=True)
+    consultation_id = db.Column(db.Integer, ForeignKey("consultation_form.id"), nullable=False, index=True)
 
 
 class Bill(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     date = db.Column(db.DateTime, nullable=False)
-    consultation_id = db.Column(db.Integer, ForeignKey("consultation_form.id"), nullable=False,index=True)
-    total = db.Column(db.Float, nullable=False)
+    consultation_id = db.Column(db.Integer, ForeignKey("consultation_form.id"), nullable=False, index=True)
+    total = db.Column(db.Integer, nullable=False)
     status = db.Column(db.Boolean, nullable=False)
 
 
-class Consultation_fee(db.Model):
+class Regulation(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    fee = db.Column(db.Float, nullable=False,default=100000)
-    updated_at = db.Column(db.DateTime, default=datetime.now(), onupdate=datetime.now(), nullable=False)
-
-
-class DailyPatientLimit(db.Model):
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    max_patients = db.Column(db.Integer, nullable=False)  # Số người khám tối đa mỗi ngày
-    updated_at = db.Column(db.DateTime, default=datetime.now(), onupdate=datetime.now(), nullable=False)
+    name = db.Column(db.String(255), nullable=False)
+    regulation = db.Column(db.Integer, nullable=False)
 
 
 class MedicalRecord(db.Model):
@@ -106,12 +116,8 @@ class MedicalRecord(db.Model):
     patient = relationship("Patient", backref="medical_records")
     consultation = relationship("Consultation_form", backref="medical_record")
 
-if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
-
-
-        # u = User(name='admin', username='admin', password=str(hashlib.md5('123456'.encode('utf-8')).hexdigest()),
-        #          user_role=UserEnum.ADMIN)
-        # db.session.add(u)
-        # db.session.commit()
+# u = User(name='admin', username='1', password=str(hashlib.md5('123'.encode('utf-8')).hexdigest()),
+#          user_role=UserEnum.ADMIN)
+# u=Patient(id=1,name="khang",gender=GenderEnum.MALE,sdt=1234,birthday=date(1960,1,1))
+# db.session.add(u)
+# db.session.commit()

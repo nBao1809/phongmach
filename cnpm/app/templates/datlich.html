@@ -1,9 +1,11 @@
 {% extends 'layout/base.html' %}
 {% block content %}
+
 <style>
     body {
         background: linear-gradient(135deg, #66ccff, #ff99cc);
     }
+
     .container {
         background: rgba(255, 255, 255, 0.8);
         border-radius: 15px;
@@ -11,41 +13,48 @@
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     }
 
+    .hidden {
+        display: none;
+    }
 </style>
+
 <div class="container mt-5">
     <h3 class="text-center text-dark text-primary mb-4">Đặt lịch khám</h3>
     <h5 class="text-dark text-primary mb-4">Tra cứu người đặt lịch</h5>
-    <form>
-        <div class="mb-3">
-            <label for="phone" class="form-label text-dark" style="font-weight: bold;">Số điện thoại người đặt
-                lịch</label>
-            <div class="input-group">
-                <span class="input-group-text"><i class="bi bi-phone"></i></span>
-                <input type="tel" class="form-control" id="phone" placeholder="(123) 456-7890" required>
-            </div>
-        </div>
 
-        <div class="d-grid gap-2">
-            <button class="btn btn-primary rounded-pill" type="submit" id="search">Tra cứu</button>
+    <div class="mb-3">
+        <label for="phone" class="form-label text-dark" style="font-weight: bold;">Số điện thoại người đặt lịch</label>
+        <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-phone"></i></span>
+            <input type="tel" class="form-control" id="phone" placeholder="(123) 456-7890" required>
         </div>
-    </form>
+    </div>
+    <div class="d-grid gap-2">
+        <button class="btn btn-primary rounded-pill" type="button" onclick="searchPatient()">Tra cứu</button>
+    </div>
+
+
+    <!-- Kết quả tìm kiếm -->
+    <div id="resultContainer" class="mt-4 hidden">
+        <h5 class="text-dark text-primary mb-3">Kết quả tìm kiếm</h5>
+        <div id="patientInfo" class="p-3 border rounded mb-3">
+            <p><strong>Họ Tên:</strong> <span id="resultName">Nguyễn Văn A</span></p>
+            <p><strong>Số điện thoại:</strong> <span id="resultPhone">(123) 456-7890</span></p>
+            <p><strong>Năm sinh:</strong> <span id="resultBirthYear">1990</span></p>
+            <p><strong>Giới tính:</strong> <span id="resultGender">Nam</span></p>
+            <button class="btn btn-success btn-sm" onclick="usePatientInfo()">Sử dụng thông tin này</button>
+            <button class="btn btn-secondary btn-sm" onclick="resetSearch()">Tìm kiếm lại</button>
+        </div>
+    </div>
 </div>
 
-<div class="container mt-3">
-    <form>
-        <h5 class="text-dark text-primary mb-4">Hoặc thêm người đặt lịch</h5>
-
-        <div class="row">
-            <div class="col">
-                <label for="Ho" class="form-label text-dark" style="font-weight: bold;">Họ</label>
-                <input type="text" class="form-control" placeholder="Họ" aria-label="Họ" id="Ho" required>
-            </div>
-            <div class="col">
-                <label for="Ten" class="form-label text-dark" style="font-weight: bold;">Tên</label>
-                <input type="text" class="form-control" placeholder="Tên" aria-label="Tên" id="Ten" required>
-            </div>
+<div id="newPatientContainer" class="container mt-3">
+    <h5 class="text-dark text-primary mb-4">Nhập thông tin bệnh nhân mới</h5>
+    <form onsubmit="datLich()">
+        <div class="mb-3 mt-3">
+            <label for="Ten" class="form-label text-dark" style="font-weight: bold;">Họ Tên</label>
+            <input type="text" class="form-control" id="Ten" placeholder="Họ Tên" required>
         </div>
-
         <div class="mb-3 mt-3">
             <label for="phone1" class="form-label text-dark" style="font-weight: bold;">Số điện thoại</label>
             <div class="input-group">
@@ -53,23 +62,10 @@
                 <input type="tel" class="form-control" id="phone1" placeholder="(123) 456-7890" required>
             </div>
         </div>
-
-        <div class="mb-3 mt-3">
-            <label for="ngayDatLich" class="form-label text-dark" style="font-weight: bold;">Ngày đặt lịch</label>
-            <input type="date" class="form-control" id="ngayDatLich" name="ngayDatLich" required min="{{ today }}">
-        </div>
-
         <div class="mb-3 mt-3">
             <label for="namSinh" class="form-label text-dark" style="font-weight: bold;">Năm sinh</label>
-            <input type="number" class="form-control" id="namSinh" placeholder="Nhập năm sinh" min="1900" max="2024"
-                   required>
+            <input type="number" class="form-control" id="namSinh" placeholder="Nhập năm sinh" min="1900" required>
         </div>
-
-        <div class="mb-3 mt-3">
-            <label for="diaChi" class="form-label text-dark" style="font-weight: bold;">Địa chỉ</label>
-            <input type="text" class="form-control" id="diaChi" placeholder="Nhập địa chỉ" required>
-        </div>
-
         <div class="mb-3 mt-3">
             <label class="form-label text-dark" style="font-weight: bold;">Giới tính</label><br>
             <div class="form-check form-check-inline">
@@ -81,11 +77,20 @@
                 <label for="nu" class="form-check-label text-dark">Nữ</label>
             </div>
         </div>
-
-        <div class="d-grid gap-2">
-            <button class="btn btn-primary rounded-pill" type="submit" id="Them">Đặt lịch</button>
+        <div class="mb-3 mt-3">
+            <label for="ngayDatLich" class="form-label text-dark" style="font-weight: bold;">Ngày đặt lịch</label>
+            <input type="date" class="form-control" id="ngayDatLich" name="ngayDatLich" required>
+        </div>
+        <!--        <div class="d-grid gap-2">-->
+        <!--            <button class="btn btn-primary rounded-pill" type="submit">Đặt lịch</button>-->
+        <!--        </div>-->
+        <div class="d-md-flex gap-2 justify-content-end">
+            <button class="btn btn-secondary rounded-pill" type="button" onclick="resetForm()">Hủy</button>
+            <button class="btn btn-primary rounded-pill" type="submit">Đặt lịch</button>
         </div>
     </form>
 </div>
 
+
 {% endblock %}
+
