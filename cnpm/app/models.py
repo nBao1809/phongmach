@@ -95,6 +95,16 @@ class DailyPatientLimit(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.now(), onupdate=datetime.now(), nullable=False)
 
 
+class MedicalRecord(db.Model):
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    patient_id = db.Column(db.Integer, ForeignKey("patient.id"), nullable=False, index=True)
+    consultation_id = db.Column(db.Integer, ForeignKey("consultation_form.id"), nullable=True)
+    content = db.Column(db.Text, nullable=False)  # Nội dung bệnh án
+    created_at = db.Column(db.DateTime, default=datetime.now(), nullable=False)
+    updated_at = db.Column(db.DateTime, default=datetime.now(), onupdate=datetime.now(), nullable=False)
+    patient = relationship("Patient", backref="medical_records")
+    consultation = relationship("Consultation_form", backref="medical_record")
+
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
