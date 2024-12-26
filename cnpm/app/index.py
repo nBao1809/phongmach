@@ -64,6 +64,11 @@ def quanlyphieukham():
     return  render_template('quanlyphieukham.html')
 
 
+@app.route("/thanhtoan")
+def thanhtoan():
+    return render_template('thanhtoan.html')
+
+
 
 # API lấy danh sách bệnh nhân theo ngày
 @app.route('/api/patients')
