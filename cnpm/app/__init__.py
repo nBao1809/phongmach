@@ -11,3 +11,10 @@ app.config["SQLALCHEMY_DATABASE_URI"] = "mysql+pymysql://root:%s@localhost/phong
 
 db = SQLAlchemy(app=app)
 login = LoginManager(app=app)
+
+cloudinary.config(
+    cloud_name="dblzpkokm",
+    api_key="629135199449497",
+    api_secret="YanTDoC3S-bHO-i4I9S8G2hBevs",
+    secure=True
+)

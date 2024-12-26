@@ -1,13 +1,13 @@
-<nav class="navbar navbar-expand-sm bg-dark navbar-dark">
+<nav class="navbar navbar-expand-sm bg-primary  navbar-white">
     <div class="container-fluid">
-        <a class="navbar-brand" href="/">E-commerce Website</a>
+        <a class="navbar-brand text-white" href="/">Phòng Mạch Bảo Khang</a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#collapsibleNavbar">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="collapsibleNavbar">
             <ul class="navbar-nav me-auto">
                 <li class="nav-item">
-                    <a class="nav-link" href="/">Trang chủ</a>
+                    <a class="nav-link text-white"  href="/">Trang chủ</a>
                 </li>
 
                 {% if current_user.is_authenticated %}
@@ -24,16 +24,9 @@
                 <li class="nav-item">
                     <a class="nav-link text-danger" href="/login">Đăng nhập</a>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link text-success" href="/register">Đăng ký</a>
-                </li>
                 {% endif %}
 
             </ul>
-            <form method="get" action="/" class="d-flex">
-                <input class="form-control me-2" type="text" name="kw" placeholder="Tìm sản phẩm">
-                <button class="btn btn-primary" type="submit">Tìm</button>
-            </form>
         </div>
     </div>
 </nav>
