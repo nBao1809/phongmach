@@ -84,5 +84,36 @@ body {
 .contact-link:active {
     color: #004085;
 }
+/* Thêm vào CSS */
+#patient-list {
+    transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+}
 
+#patient-list.show {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+#patient-list.hide {
+    opacity: 0;
+    transform: translateY(-20px);
+}
+/* Hiệu ứng cho bảng */
+.table th, .table td {
+    transition: background-color 0.3s ease;
+}
+
+.table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+/* Nút xác nhận toàn bộ */
+#confirm-day {
+    transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+#confirm-day:hover {
+    background-color: #28a745;
+    transform: scale(1.05);
+}
 

@@ -1,0 +1,128 @@
+{% extends 'layout/base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <h3 class="text-center text-dark text-primary mb-4">Danh sách Hóa Đơn</h3>
+
+    <!-- Ô tìm kiếm theo mã hóa đơn với biểu tượng kính lúp -->
+    <div class="input-group mb-3">
+        <input type="text" id="search-invoice" class="form-control" placeholder="Tìm kiếm theo mã hóa đơn" onkeyup="searchInvoice()">
+        <button class="btn btn-outline-secondary" type="button">
+            <i class="bi bi-search"></i>
+        </button>
+    </div>
+
+    <!-- Nút sắp xếp -->
+    <div class="mb-3">
+        <button class="btn btn-primary" onclick="sortByDate()">Sắp xếp theo ngày</button>
+        <button class="btn btn-primary" onclick="sortByUnpaid()">Sắp xếp theo đơn chưa thanh toán</button>
+    </div>
+
+    <!-- Danh sách các hóa đơn -->
+    <div id="invoices-list">
+        <table class="table table-bordered table-hover">
+            <thead>
+            <tr>
+                <th>ID Hóa Đơn</th>
+                <th>Tên Bệnh Nhân</th>
+                <th>Ngày Khám</th>
+                <th>Tiền Khám</th>
+                <th>Tiền Thuốc</th>
+                <th>Tổng Cộng</th>
+                <th>Trạng Thái</th>
+            </tr>
+            </thead>
+            <tbody id="invoices-table-body">
+            <!-- Dữ liệu sẽ được nạp từ API -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    // Dữ liệu giả
+    const fakeInvoices = [
+        { id: 1, patient_name: 'Nguyễn Văn A', date: '2024-12-01', consultation_fee: 500000, medication_fee: 200000, total: 700000, status: 'unpaid' },
+        { id: 2, patient_name: 'Trần Thị B', date: '2024-12-04', consultation_fee: 600000, medication_fee: 300000, total: 900000, status: 'paid' },
+        { id: 3, patient_name: 'Lê Văn C', date: '2024-12-03', consultation_fee: 550000, medication_fee: 250000, total: 800000, status: 'unpaid' },
+        { id: 4, patient_name: 'Phạm Thị D', date: '2024-12-07', consultation_fee: 700000, medication_fee: 400000, total: 1100000, status: 'paid' },
+        { id: 5, patient_name: 'Hoàng Văn E', date: '2024-12-05', consultation_fee: 650000, medication_fee: 350000, total: 1000000, status: 'unpaid' }
+    ];
+
+    // Hiển thị danh sách hóa đơn
+    function loadInvoices(sortedInvoices = fakeInvoices) {
+        const tableBody = document.getElementById('invoices-table-body');
+        tableBody.innerHTML = ''; // Xóa nội dung cũ
+
+        sortedInvoices.forEach((invoice, index) => {
+            const row = `
+                <tr>
+                    <td>${invoice.id}</td>
+                    <td>${invoice.patient_name}</td>
+                    <td>${invoice.date}</td>
+                    <td>${invoice.consultation_fee}</td>
+                    <td>${invoice.medication_fee}</td>
+                    <td>${invoice.total}</td>
+                    <td>
+                        ${invoice.status === 'unpaid' ?
+                            `<button class="btn btn-success btn-sm" onclick="confirmPayment(${invoice.id})">Xác nhận thanh toán</button>` :
+                            'Đã thanh toán'}
+                    </td>
+                </tr>
+            `;
+            tableBody.insertAdjacentHTML('beforeend', row);
+        });
+    }
+
+    // Xác nhận thanh toán
+    function confirmPayment(invoiceId) {
+        const invoice = fakeInvoices.find(inv => inv.id === invoiceId);
+        if (invoice) {
+            invoice.status = 'paid';
+            alert('Xác nhận thanh toán thành công!');
+            loadInvoices(); // Làm mới danh sách hóa đơn
+        } else {
+            alert('Có lỗi xảy ra, vui lòng thử lại.');
+        }
+    }
+
+    // Tìm kiếm hóa đơn theo mã
+    function searchInvoice() {
+        const searchValue = document.getElementById('search-invoice').value.toLowerCase();
+        const tableBody = document.getElementById('invoices-table-body');
+        const rows = tableBody.getElementsByTagName('tr');
+
+        for (let i = 0; i < rows.length; i++) {
+            const cells = rows[i].getElementsByTagName('td');
+            const invoiceId = cells[0].innerText.toLowerCase();
+
+            if (invoiceId.includes(searchValue)) {
+                rows[i].style.display = '';
+            } else {
+                rows[i].style.display = 'none';
+            }
+        }
+    }
+
+    // Sắp xếp theo ngày
+    function sortByDate() {
+        const sortedInvoices = [...fakeInvoices].sort((a, b) => new Date(a.date) - new Date(b.date));
+        loadInvoices(sortedInvoices);
+    }
+
+    // Sắp xếp theo đơn chưa thanh toán
+    function sortByUnpaid() {
+        const sortedInvoices = [...fakeInvoices].sort((a, b) => {
+            if (a.status === 'unpaid' && b.status !== 'unpaid') return -1;
+            if (a.status !== 'unpaid' && b.status === 'unpaid') return 1;
+            return new Date(a.date) - new Date(b.date);
+        });
+        loadInvoices(sortedInvoices);
+    }
+
+    // Tải danh sách hóa đơn khi trang được tải
+    window.onload = () => {
+        sortByDate();
+    };
+</script>
+{% endblock %}

@@ -1,0 +1,115 @@
+{% extends 'layout/base.html' %}
+{% block content %}
+<div class="container mt-5" style="background-color: #f0f8ff; padding: 20px; border-radius: 8px;">
+    <h3 class="text-center text-dark text-primary mb-4">Danh sách khám theo ngày</h3>
+    <form id="form-select-date">
+        <div class="mb-3">
+            <label for="selectDate" class="form-label text-dark" style="font-weight: bold;">Chọn ngày</label>
+            <select class="form-control" id="selectDate" name="selectDate" required>
+                <option value="" disabled selected>-- Chọn ngày --</option>
+                {% for date in available_dates %}
+                <option value="{{ date }}">{{ date }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="d-grid gap-2">
+            <button type="submit" class="btn btn-primary rounded-pill">Xem danh sách
+            </button>
+
+        </div>
+    </form>
+
+
+    <div class="mt-4" id="patient-list" style="display: none; background-color: #f4f6f9; padding: 20px; border-radius: 8px;">
+        <h5 class="text-dark">Danh sách bệnh nhân:</h5>
+        <table class="table table-bordered table-hover" style="border: 2px solid #007bff;">
+            <thead>
+            <tr>
+                <th>#</th>
+                <th>Họ và Tên</th>
+                <th>Ngày Sinh</th>
+                <th>Số Điện Thoại</th>
+                <th>Địa Chỉ</th>
+                <th>Giới Tính</th>
+                <th>Hành Động</th>
+            </tr>
+            </thead>
+            <tbody id="patient-table-body">
+            </tbody>
+        </table>
+        <div class="d-grid gap-2 mt-3">
+            <button class="btn btn-success rounded-pill" id="confirm-day">Xác nhận toàn bộ</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.getElementById('form-select-date').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const selectedDate = document.getElementById('selectDate').value;
+
+        // Fetch danh sách bệnh nhân
+        fetch(`/api/patients?date=${selectedDate}`)
+            .then(response => response.json())
+            .then(data => {
+                const tableBody = document.getElementById('patient-table-body');
+                const patientList = document.getElementById('patient-list');
+                tableBody.innerHTML = '';
+                if (data.patients.length > 0) {
+                    patientList.style.display = 'block';
+                    data.patients.forEach((patient, index) => {
+                        const row = `
+                            <tr>
+                                <td>${index + 1}</td>
+                                <td>${patient.full_name}</td>
+                                <td>${patient.birth_date}</td>
+                                <td>${patient.phone}</td>
+                                <td>${patient.address}</td>
+                                <td>${patient.gender}</td>
+                                <td>
+                                <button class="btn btn-sm btn-warning" onclick="editPatient(${patient.id})">Sửa</button>
+                                <button class="btn btn-sm btn-danger" onclick="deletePatient(${patient.id})">Xóa</button>
+                            </td>
+                            </tr>`;
+                        tableBody.insertAdjacentHTML('beforeend', row);
+                    });
+                } else {
+                    patientList.style.display = 'none';
+                    alert('Không có bệnh nhân nào chưa xác nhận cho ngày này.');
+                }
+            });
+    });
+
+    document.getElementById('confirm-day').addEventListener('click', function() {
+        const selectedDate = document.getElementById('selectDate').value;
+
+        // Xác nhận toàn bộ danh sách của ngày
+        fetch(`/api/confirm-day?date=${selectedDate}`, { method: 'POST' })
+            .then(response => {
+                if (response.ok) {
+                    alert('Đã xác nhận toàn bộ danh sách khám ngày ' + selectedDate);
+                    document.getElementById('form-select-date').submit(); // Làm mới giao diện
+
+                    const toast = document.createElement('div');
+toast.classList.add('alert', 'alert-success');
+toast.textContent = 'Danh sách khám ngày ' + selectedDate + ' đã được xác nhận.';
+document.body.appendChild(toast);
+                }
+            });
+    });
+    function editPatient(id) {
+        alert('Chức năng sửa bệnh nhân (ID: ' + id + ') chưa được triển khai.');
+    }
+
+    function deletePatient(id) {
+        if (confirm('Bạn có chắc muốn xóa bệnh nhân này?')) {
+            fetch(`/api/patient/${id}`, {
+                method: 'DELETE'
+            }).then(() => {
+                alert('Xóa thành công!');
+                document.getElementById('form-select-date').submit();
+            });
+        }
+    }
+</script>
+{% endblock %}
