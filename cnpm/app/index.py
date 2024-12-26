@@ -59,6 +59,11 @@ def quanlydanhsachkham():
     return render_template('quanlydanhsachkham.html', patients=[],available_dates=available_dates)
 
 
+@app.route("/quanlyphieukham")
+def quanlyphieukham():
+    return  render_template('quanlyphieukham.html')
+
+
 
 # API lấy danh sách bệnh nhân theo ngày
 @app.route('/api/patients')

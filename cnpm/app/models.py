@@ -30,7 +30,7 @@ class Patient(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.String(50), nullable=False)
     gender = db.Column(db.Enum(GenderEnum), nullable=False)
-    birthday = db.Column(db.DateTime, nullable=False)
+    birthday = db.Column(db.Date, nullable=False)
     sdt = db.Column(db.String(20), nullable=False)
 
 
