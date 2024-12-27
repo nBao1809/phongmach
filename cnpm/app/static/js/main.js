@@ -6,11 +6,11 @@ async function searchPatient() {
     const phone = document.getElementById("phone").value;
     const res = await fetch(`/datlich/${phone}`)
     const patient = await res.json()
-    console.log(patient)
     // Giả lập dữ liệu bệnh nhân
-
-
+    if (patient.error)
+        return
     if (patient) {
+        sessionStorage.setItem("patient_id", patient.id)
         // Hiển thị thông tin bệnh nhân
         document.getElementById("resultName").innerText = patient["name"];
         document.getElementById("resultBirthYear").innerText = patient["birthday"];
@@ -49,17 +49,21 @@ function usePatientInfo() {
     // Khóa radio button (không cho thay đổi giới tính)
     document.getElementById("nam").disabled = true;
     document.getElementById("nu").disabled = true;
+    document.getElementById("thembn").disabled = true
+
     // Hiển thị form mới (nếu cần)
     newPatientContainer.classList.remove("hidden");
 }
 
 
 function resetSearch() {
+    sessionStorage.removeItem("patient_id")
     document.getElementById("nam").disabled = false;
     document.getElementById("nu").disabled = false;
     document.getElementById("Ten").readOnly = false;
     document.getElementById("phone1").readOnly = false;
     document.getElementById("namSinh").readOnly = false;
+    document.getElementById("thembn").disabled = false
     form.reset();
 }
 
@@ -68,16 +72,57 @@ function resetForm() {
 }
 
 async function datLich() {
-    let date = document.getElementById("ngayDatLich")
+    if (!form.checkValidity())
+        return
+    let date = document.getElementById("ngayDatLich").value
     const res = await fetch('/api/datlich', {
         method: 'POST',
         body: JSON.stringify({
-            'date': date
+            'date': date,
+            'patient_id': sessionStorage.getItem("patient_id")
         }),
         headers: {
             'Content-Type': 'application/json'
         }
     })
     const data = await res.json()
-//     TODO Thêm thông báo thêm thành công
+    console.log(data)
+    alert("Đã đặt lịch thành công")
+}
+
+function addPatient() {
+    const patientData = {
+        name: document.getElementById('Ten').value,
+        phone: document.getElementById('phone1').value,
+        birthYear: document.getElementById('namSinh').value,
+        gender: document.querySelector('input[name="gioiTinh"]:checked').value,
+    };
+
+    fetch('/add_patient', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(patientData)
+    })
+        .then(response => {
+            return response.json();
+        })
+        .then(data => {
+            if (data.id) {
+                sessionStorage.setItem("patient_id", data.id)
+                document.getElementById("Ten").readOnly = true;
+                document.getElementById("phone1").readOnly = true;
+                document.getElementById("namSinh").readOnly = true;
+                // Khóa radio button (không cho thay đổi giới tính)
+                document.getElementById("nam").disabled = true;
+                document.getElementById("nu").disabled = true;
+            }
+            alert(data.message);
+
+        })
+        .catch(error => {
+            console.error('Lỗi khi fetch:', error);
+            alert('Có lỗi xảy ra khi thêm bệnh nhân.');
+        });
 }

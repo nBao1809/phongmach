@@ -50,7 +50,7 @@
 
 <div id="newPatientContainer" class="container mt-3">
     <h5 class="text-dark text-primary mb-4">Nhập thông tin bệnh nhân mới</h5>
-    <form onsubmit="datLich()">
+    <form onsubmit="return false">
         <div class="mb-3 mt-3">
             <label for="Ten" class="form-label text-dark" style="font-weight: bold;">Họ Tên</label>
             <input type="text" class="form-control" id="Ten" placeholder="Họ Tên" required>
@@ -69,11 +69,11 @@
         <div class="mb-3 mt-3">
             <label class="form-label text-dark" style="font-weight: bold;">Giới tính</label><br>
             <div class="form-check form-check-inline">
-                <input type="radio" id="nam" name="gioiTinh" value="Nam" class="form-check-input" required>
+                <input type="radio" id="nam" name="gioiTinh" value="nam" class="form-check-input" required>
                 <label for="nam" class="form-check-label text-dark">Nam</label>
             </div>
             <div class="form-check form-check-inline">
-                <input type="radio" id="nu" name="gioiTinh" value="Nữ" class="form-check-input" required>
+                <input type="radio" id="nu" name="gioiTinh" value="nữ" class="form-check-input" required>
                 <label for="nu" class="form-check-label text-dark">Nữ</label>
             </div>
         </div>
@@ -81,12 +81,10 @@
             <label for="ngayDatLich" class="form-label text-dark" style="font-weight: bold;">Ngày đặt lịch</label>
             <input type="date" class="form-control" id="ngayDatLich" name="ngayDatLich" required>
         </div>
-        <!--        <div class="d-grid gap-2">-->
-        <!--            <button class="btn btn-primary rounded-pill" type="submit">Đặt lịch</button>-->
-        <!--        </div>-->
         <div class="d-md-flex gap-2 justify-content-end">
             <button class="btn btn-secondary rounded-pill" type="button" onclick="resetForm()">Hủy</button>
-            <button class="btn btn-primary rounded-pill" type="submit">Đặt lịch</button>
+            <button class="btn btn-primary rounded-pill" id="thembn" type="button" onclick="addPatient()">Thêm bệnh nhân</button>
+            <button class="btn btn-primary rounded-pill" id="huy" type="button" onclick="datLich()">Đặt lịch</button>
         </div>
     </form>
 </div>
