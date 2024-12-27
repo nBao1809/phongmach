@@ -6,10 +6,6 @@ async function searchPatient() {
     const phone = document.getElementById("phone").value;
     const res = await fetch(`/datlich/${phone}`)
     const patient = await res.json()
-    console.log(patient)
-    // Giả lập dữ liệu bệnh nhân
-
-
     if (patient) {
         // Hiển thị thông tin bệnh nhân
         document.getElementById("resultName").innerText = patient["name"];
@@ -67,17 +63,68 @@ function resetForm() {
     resetSearch();
 }
 
-async function datLich() {
-    let date = document.getElementById("ngayDatLich")
+async function datLich(e) {
+    e.preventDefault()
+    let date = document.getElementById("ngayDatLich").value
     const res = await fetch('/api/datlich', {
         method: 'POST',
         body: JSON.stringify({
-            'date': date
+            'date': date,
+            'patient_id': patient_id
         }),
         headers: {
             'Content-Type': 'application/json'
         }
     })
     const data = await res.json()
-//     TODO Thêm thông báo thêm thành công
+alert(data)
+}
+
+async function addPatient() {
+    if (!form.checkValidity()){
+        alert("Vui lòng nhập đầy đủ thông tin")
+        return
+    }
+
+    // Lấy thông tin từ các trường nhập liệu
+    const name = document.getElementById("Ten").value; // Lấy giá trị từ input Họ Tên
+    const phone = document.getElementById("phone1").value; // Lấy giá trị từ input Số điện thoại
+    const birthYear = document.getElementById("namSinh").value; // Lấy giá trị từ input Năm sinh
+
+    // Lấy giá trị giới tính từ radio button
+    const gender = document.querySelector('input[name="gioiTinh"]:checked'); // Lấy radio button được chọn
+    const genderValue = gender ? gender.value : null; // Nếu có radio button được chọn, lấy giá trị, nếu không thì null
+
+    // Tạo đối tượng bệnh nhân
+    const patientData = {
+        'name': name,
+        'gender': genderValue,
+        'birthday': birthYear,
+        'sdt': phone
+    };
+
+    try {
+        // Gửi yêu cầu POST đến API để thêm bệnh nhân
+        const res = await fetch('/api/patient/', {
+            method: 'POST',
+            body: JSON.stringify(patientData),
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        // Kiểm tra xem yêu cầu có thành công không
+        if (res.ok) {
+            const data = await res.json();
+            // TODO: Thêm thông báo thành công
+            console.log("Bệnh nhân đã được thêm thành công:", data);
+        } else {
+            const errorData = await res.json();
+            // TODO: Thêm thông báo lỗi
+            console.error("Lỗi khi thêm bệnh nhân:", errorData);
+        }
+    } catch (error) {
+        // Xử lý lỗi mạng hoặc lỗi khác
+        console.error("Có lỗi xảy ra:", error);
+    }
 }

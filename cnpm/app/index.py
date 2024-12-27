@@ -5,7 +5,7 @@ from flask import render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_user, logout_user, login_required
 from app import app, dao, login, db
 import admin
-from app.models import UserEnum, Regulation, User, Appointment_list, Patient_Appointment, Patient
+from app.models import UserEnum, Regulation, User, Appointment_list, Patient_Appointment, Patient, GenderEnum
 
 
 @app.route('/')
@@ -86,7 +86,7 @@ def get_patients():
 def delete_patient(patient_id):
     global patients_data
     patients_data = [p for p in patients_data if p['id'] != patient_id]
-    return jsonify({"message": "Deleted successfully"}), 200
+    return jsonify({"message": "Deleted successfully"}), 204
 
 @app.route('/api/confirm-day', methods=['POST'])
 def confirm_day():
@@ -151,14 +151,48 @@ def api_datlich():
     return jsonify(ma)
 
 
+@app.route('/api/patient/', methods=['POST'])
+def add_patient():
+    data = request.get_json()  # Lấy dữ liệu JSON từ yêu cầu
+
+    # Kiểm tra và lấy thông tin bệnh nhân
+    name = data.get('name')
+    gender = data.get('gender')
+    birthday = data.get('birthday')
+    sdt = data.get('sdt')
+
+    # Kiểm tra tính hợp lệ của dữ liệu
+    if not name or not gender or not birthday or not sdt:
+        return jsonify({"error": "Tất cả các trường đều là bắt buộc."}), 400
+
+    try:
+        # Tạo đối tượng Patient mới
+        new_patient = Patient(
+            name=name,
+            gender=GenderEnum(gender),
+            birthday=birthday,
+            sdt=sdt
+        )
+
+        # Thêm bệnh nhân vào cơ sở dữ liệu
+        dao.add_new_patient(new_patient)
+
+        return jsonify(new_patient.toDict()), 201  # Trả về thông tin bệnh nhân mới
+    except KeyError:
+        return jsonify({"error": "Giới tính không hợp lệ."}), 400
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500  # Xử lý lỗi khác
+
+
 if __name__ == '__main__':
-    app.run(debug=True, port=5001)
-
-
+    app.run(debug=True)
+    u = User(name='admin', username='admin', password=str(hashlib.md5('123'.encode('utf-8')).hexdigest()),
+             user_role=UserEnum.ADMIN)
+    db.session.add(u)
+    db.session.commit()
 @app.before_first_request
 def before_first_request():
     with app.app_context():
-        db.create_all()
         if not User.query.first():
             u = User(name='admin', username='admin', password=str(hashlib.md5('123'.encode('utf-8')).hexdigest()),
                      user_role=UserEnum.ADMIN)

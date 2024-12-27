@@ -1,6 +1,6 @@
 from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Enum, DateTime
 from sqlalchemy.orm import relationship
-from app import db
+from app import db,app
 from enum import Enum as RoleEnum
 from flask_login import UserMixin
 from datetime import datetime
@@ -31,7 +31,7 @@ class Patient(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.String(50), nullable=False)
     gender = db.Column(db.Enum(GenderEnum), nullable=False)
-    birthday = db.Column(db.Date, nullable=False)
+    birthday = db.Column(db.Integer, nullable=False)
     sdt = db.Column(db.String(20), nullable=False)
 
     def toDict(self):
@@ -116,6 +116,9 @@ class MedicalRecord(db.Model):
     patient = relationship("Patient", backref="medical_records")
     consultation = relationship("Consultation_form", backref="medical_record")
 
+if __name__ == '__main__':
+    with app.app_context():
+        db.create_all()
 # u = User(name='admin', username='1', password=str(hashlib.md5('123'.encode('utf-8')).hexdigest()),
 #          user_role=UserEnum.ADMIN)
 # u=Patient(id=1,name="khang",gender=GenderEnum.MALE,sdt=1234,birthday=date(1960,1,1))
