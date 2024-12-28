@@ -1,10 +1,11 @@
+import hashlib
+
 from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Enum, DateTime
 from sqlalchemy.orm import relationship
-from app import db
+from app import db, app
 from enum import Enum as RoleEnum
 from flask_login import UserMixin
 from datetime import datetime
-import app
 
 
 class UserEnum(RoleEnum):
@@ -54,7 +55,7 @@ class Appointment_list(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     date = db.Column(db.DateTime, nullable=False, unique=True)
     status = db.Column(db.Boolean, nullable=False)
-
+    total = db.Column(db.Integer, nullable=True)
 
 class Patient_Appointment(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -69,7 +70,7 @@ class Medication(db.Model):
     medication_unit_id = db.Column(db.Integer, ForeignKey("medication_units.id"), nullable=False, index=True)
     medication_consultations = relationship("Medication_consultation", backref="medication_units", lazy=True,
                                             cascade="all, delete-orphan")
-
+    instructions=db.Column(db.Text, nullable=False)
     def __str__(self):
         return self.name
 
@@ -106,18 +107,18 @@ class Regulation(db.Model):
     regulation = db.Column(db.Integer, nullable=False)
 
 
-class MedicalRecord(db.Model):
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    patient_id = db.Column(db.Integer, ForeignKey("patient.id"), nullable=False, index=True)
-    consultation_id = db.Column(db.Integer, ForeignKey("consultation_form.id"), nullable=True)
-    content = db.Column(db.Text, nullable=False)  # Nội dung bệnh án
-    created_at = db.Column(db.DateTime, default=datetime.now(), nullable=False)
-    updated_at = db.Column(db.DateTime, default=datetime.now(), onupdate=datetime.now(), nullable=False)
-    patient = relationship("Patient", backref="medical_records")
-    consultation = relationship("Consultation_form", backref="medical_record")
+if __name__ == '__main__':
 
-# u = User(name='admin', username='1', password=str(hashlib.md5('123'.encode('utf-8')).hexdigest()),
-#          user_role=UserEnum.ADMIN)
-# u=Patient(id=1,name="khang",gender=GenderEnum.MALE,sdt=1234,birthday=date(1960,1,1))
-# db.session.add(u)
-# db.session.commit()
+    with app.app_context():
+        db.create_all()
+        if not User.query.first():
+            u = User(name='a', username='a', password=str(hashlib.md5('123'.encode('utf-8')).hexdigest()),
+                 user_role=UserEnum.ADMIN)
+        db.session.add(u)
+        db.session.commit()
+        if not Regulation.query.first():
+            r = Regulation(name="Giới hạn bệnh nhân", regulation=40)
+            r2 = Regulation(name="Tiền khám", regulation=100000)
+        db.session.add(r)
+        db.session.add(r2)
+        db.session.commit()

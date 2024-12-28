@@ -31,7 +31,7 @@ def add_appointment_list(date):
     # Kiểm tra xem cuộc hẹn đã tồn tại cho ngày này chưa
     existing_appointment = Appointment_list.query.filter(Appointment_list.date == date).first()
     if existing_appointment:
-        raise ValueError("Cuộc hẹn đã tồn tại cho ngày này.")
+        return {"msg": "đã có lịch ngày này"}
 
     # Tạo một đối tượng Appointment_list mới
     new_appointment = Appointment_list(date=date, status=False)
@@ -45,15 +45,13 @@ def add_appointment_list(date):
 
 
 
-def make_appointment(patient_id, appointment_id):
+def make_appointment(patient_id, appointment):
     # Kiểm tra xem bệnh nhân và cuộc hẹn có tồn tại hay không
     patient = Patient.query.get(patient_id)
-    appointment = Appointment_list.query.get(appointment_id)
-
     if not patient:
-        return None
+        return {"error": "Patient not found"}
     if not appointment:
-        return None
+        return {"error": "Appointment not found"}
 
     # Tạo một đối tượng Patient_Appointment mới
     new_patient_appointment = Patient_Appointment(appointment_id=appointment.id, patient_id=patient.id)
