@@ -1,6 +1,6 @@
 import hashlib
 
-from app.models import Medication, Medication_units, Consultation_fee, User, UserEnum, DailyPatientLimit
+from app.models import Medication, Medication_units, User, UserEnum, Regulation,Patient
 from flask_admin import Admin, BaseView, expose, AdminIndexView
 from app import app, db
 from flask_admin.contrib.sqla import ModelView
@@ -21,6 +21,8 @@ class AdminView(ModelView):
     def is_accessible(self):
         return current_user.is_authenticated and current_user.user_role.__eq__(UserEnum.ADMIN)
 
+
+class UserView(AdminView):
     def on_model_change(self, form, model, is_created):
         if is_created:
             # Nếu đây là một người dùng mới, bạn sẽ hash mật khẩu trước khi lưu
@@ -35,9 +37,8 @@ class AdminView(ModelView):
             if form.password.data:
                 model.password = str(hashlib.md5(form.password.data.encode('utf-8')).hexdigest())
 
-        return super().on_model_change(form, model, is_created)
-
-
+        self.change = super().on_model_change(form, model, is_created)
+        return self.change
 class MedicationView(AdminView):
     column_list = ['name', 'price']
     column_searchable_list = ['name']
@@ -48,6 +49,11 @@ class MedicationView(AdminView):
         'price':'Giá bán',
     }
 
+class PatientView(AdminView):
+    column_list = ['id', 'name','gender','birthday','sdt']
+    column_searchable_list = ['name']
+    column_editable_list = [ 'name','gender','birthday','sdt']
+    can_export = True
 
 class Medication_unitsView(AdminView):
     column_list = ['unit']
@@ -57,19 +63,12 @@ class Medication_unitsView(AdminView):
     }
 
 
-class Consultation_feeView(AdminView):
-    column_list = ['fee']
-    column_editable_list = ['fee']
+class RegulationView(AdminView):
+    column_list = ['id','name','regulation']
+    column_editable_list = ['name','regulation']
     column_labels = {
-        'fee':'Phí khám bệnh'
-    }
-
-
-class DailyPatientLimitView(AdminView):
-    column_list = ['max_patients']
-    column_editable_list = ['max_patients']
-    column_labels = {
-        'max_patients': 'Giới hạn bệnh nhân'
+        'name':'quy định',
+        'regulation':'nội dung'
     }
 
 
@@ -87,8 +86,8 @@ class LogoutView(AuthenticatedView):
 
 
 admin.add_view(MedicationView(Medication, db.session,name='Thuốc'))
+admin.add_view(PatientView(Patient, db.session,name="Bệnh nhân"))
 admin.add_view(Medication_unitsView(Medication_units, db.session,name="Đơn vị"))
-admin.add_view(Consultation_feeView(Consultation_fee, db.session,name="Phí khám bệnh"))
-admin.add_view(DailyPatientLimitView(DailyPatientLimit, db.session,name="Giới hạn bệnh nhân"))
-admin.add_view(AdminView(User, db.session))
+admin.add_view(RegulationView(Regulation, db.session,name="Quy định"))
+admin.add_view(UserView(User, db.session))
 admin.add_view(LogoutView(name='Đăng xuất'))
