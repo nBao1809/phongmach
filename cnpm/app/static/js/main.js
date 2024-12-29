@@ -1,26 +1,35 @@
+// region  dat lich
 const form = document.querySelector("form")
 const resultContainer = document.getElementById("resultContainer");
 const newPatientContainer = document.getElementById("newPatientContainer");
 
 async function searchPatient() {
     const phone = document.getElementById("phone").value;
-    const res = await fetch(`/datlich/${phone}`)
-    const patient = await res.json()
-    // Giả lập dữ liệu bệnh nhân
-    if (patient.error)
-        return
-    if (patient) {
-        sessionStorage.setItem("patient_id", patient.id)
+    try {
+        const res = await fetch(`/datlich/${phone}`);
+        // Kiểm tra xem phản hồi có thành công không
+        if (!res.ok) {
+            throw new Error("Có lỗi xảy ra khi tìm kiếm bệnh nhân.");
+        }
+        const patient = await res.json();
+        // Kiểm tra nếu có lỗi trong dữ liệu trả về
+        if (patient.error) {
+            alert(patient.error); // Hiển thị thông báo lỗi từ server
+            resultContainer.classList.add("hidden");
+            return;
+        }
+        // Lưu ID bệnh nhân vào sessionStorage
+        sessionStorage.setItem("patient_id", patient.id);
         // Hiển thị thông tin bệnh nhân
         document.getElementById("resultName").innerText = patient["name"];
         document.getElementById("resultBirthYear").innerText = patient["birthday"];
         document.getElementById("resultGender").innerText = patient["gender"];
         document.getElementById("resultPhone").innerText = patient["sdt"];
-
         resultContainer.classList.remove("hidden");
-    } else {
-        // Không tìm thấy bệnh nhân
-        alert("Không tìm thấy bệnh nhân. Vui lòng nhập thông tin mới.");
+    } catch (error) {
+        // Xử lý lỗi
+        console.error("Lỗi:", error);
+        alert("Không tìm thấy bệnh nhân. Vui lòng kiểm tra lại số điện thoại.");
         resultContainer.classList.add("hidden");
     }
 }
@@ -126,3 +135,4 @@ function addPatient() {
             alert('Có lỗi xảy ra khi thêm bệnh nhân.');
         });
 }
+//endregion
