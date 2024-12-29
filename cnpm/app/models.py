@@ -107,18 +107,17 @@ class Regulation(db.Model):
     regulation = db.Column(db.Integer, nullable=False)
 
 
-if __name__ == '__main__':
-
-    with app.app_context():
-        db.create_all()
-        if not User.query.first():
-            u = User(name='a', username='a', password=str(hashlib.md5('123'.encode('utf-8')).hexdigest()),
-                 user_role=UserEnum.ADMIN)
-        db.session.add(u)
-        db.session.commit()
-        if not Regulation.query.first():
-            r = Regulation(name="Giới hạn bệnh nhân", regulation=40)
-            r2 = Regulation(name="Tiền khám", regulation=100000)
-        db.session.add(r)
-        db.session.add(r2)
-        db.session.commit()
+# if __name__ == '__main__':
+    # with app.app_context():
+        # db.create_all()
+        # if not User.query.first():
+        #     u = User(name='a', username='a', password=str(hashlib.md5('123'.encode('utf-8')).hexdigest()),
+        #          user_role=UserEnum.ADMIN)
+        # db.session.add(u)
+        # db.session.commit()
+        # if not Regulation.query.first():
+        #     r = Regulation(name="Giới hạn bệnh nhân", regulation=40)
+        #     r2 = Regulation(name="Tiền khám", regulation=100000)
+        # db.session.add(r)
+        # db.session.add(r2)
+        # db.session.commit()

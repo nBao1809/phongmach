@@ -20,7 +20,8 @@
     </form>
 
 
-    <div class="mt-4" id="patient-list" style="display: none; background-color: #f4f6f9; padding: 20px; border-radius: 8px;">
+    <div class="mt-4" id="patient-list"
+         style="display: none; background-color: #f4f6f9; padding: 20px; border-radius: 8px;">
         <h5 class="text-dark">Danh sách bệnh nhân:</h5>
         <table class="table table-bordered table-hover" style="border: 2px solid #007bff;">
             <thead>
@@ -44,21 +45,21 @@
 </div>
 
 <script>
-    document.getElementById('form-select-date').addEventListener('submit', function(e) {
+    document.getElementById('form-select-date').addEventListener('submit', async function (e) {
         e.preventDefault();
         const selectedDate = document.getElementById('selectDate').value;
 
         // Fetch danh sách bệnh nhân
-        fetch(`/api/patients?date=${selectedDate}`)
-            .then(response => response.json())
-            .then(data => {
-                const tableBody = document.getElementById('patient-table-body');
-                const patientList = document.getElementById('patient-list');
-                tableBody.innerHTML = '';
-                if (data.patients.length > 0) {
-                    patientList.style.display = 'block';
-                    data.patients.forEach((patient, index) => {
-                        const row = `
+        const res = fetch(`/api/patients?date=${selectedDate}`)
+        const data = res.json()
+
+        const tableBody = document.getElementById('patient-table-body');
+        const patientList = document.getElementById('patient-list');
+        tableBody.innerHTML = '';
+        if (data.patients.length > 0) {
+            patientList.style.display = 'block';
+            data.patients.forEach((patient, index) => {
+                const row = `
                             <tr>
                                 <td>${index + 1}</td>
                                 <td>${patient.full_name}</td>
@@ -71,32 +72,33 @@
                                 <button class="btn btn-sm btn-danger" onclick="deletePatient(${patient.id})">Xóa</button>
                             </td>
                             </tr>`;
-                        tableBody.insertAdjacentHTML('beforeend', row);
-                    });
-                } else {
-                    patientList.style.display = 'none';
-                    alert('Không có bệnh nhân nào chưa xác nhận cho ngày này.');
-                }
+                tableBody.insertAdjacentHTML('beforeend', row);
             });
+        } else {
+            patientList.style.display = 'none';
+            alert('Không có bệnh nhân nào chưa xác nhận cho ngày này.');
+        }
+
     });
 
-    document.getElementById('confirm-day').addEventListener('click', function() {
+    document.getElementById('confirm-day').addEventListener('click', function () {
         const selectedDate = document.getElementById('selectDate').value;
 
         // Xác nhận toàn bộ danh sách của ngày
-        fetch(`/api/confirm-day?date=${selectedDate}`, { method: 'POST' })
+        fetch(`/api/confirm-day?date=${selectedDate}`, {method: 'POST'})
             .then(response => {
                 if (response.ok) {
                     alert('Đã xác nhận toàn bộ danh sách khám ngày ' + selectedDate);
                     document.getElementById('form-select-date').submit(); // Làm mới giao diện
 
                     const toast = document.createElement('div');
-toast.classList.add('alert', 'alert-success');
-toast.textContent = 'Danh sách khám ngày ' + selectedDate + ' đã được xác nhận.';
-document.body.appendChild(toast);
+                    toast.classList.add('alert', 'alert-success');
+                    toast.textContent = 'Danh sách khám ngày ' + selectedDate + ' đã được xác nhận.';
+                    document.body.appendChild(toast);
                 }
             });
     });
+
     function editPatient(id) {
         alert('Chức năng sửa bệnh nhân (ID: ' + id + ') chưa được triển khai.');
     }

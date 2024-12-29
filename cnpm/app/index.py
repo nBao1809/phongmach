@@ -3,6 +3,8 @@ from datetime import date, datetime
 
 from flask import render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_user, logout_user, login_required
+from pyexpat.errors import messages
+
 from app import app, dao, login, db
 import admin
 from app.models import UserEnum, Regulation, User, Appointment_list, Patient_Appointment, Patient, GenderEnum
@@ -100,13 +102,13 @@ def confirm_day():
 
 
 # dat lich
-@app.route("/datlich/<string:phone>")
+@app.route("/api/datlich/<string:phone>")
 def get_patient_by_phone(phone):
     patient = dao.get_patient_by_phone(phone)
     if patient:
         return jsonify(patient.toDict())
     else:
-        return jsonify(error="patient not found"), 404
+        return jsonify(error="Không tìm thấy bệnh nhân"), 404
 
 
 @app.route("/login-admin", methods=['post'])
@@ -139,20 +141,19 @@ def api_datlich():
             Patient_Appointment.appointment_id == appointment.id).all()
 
         # Kiểm tra xem bệnh nhân đã đặt lịch chưa
-        for ap in appointment_patients:
-            if ap.patient_id == patient_id:
-                return jsonify(error="Người này đã đặt lịch rồi"), 403
+        if any(ap.patient_id == patient_id for ap in appointment_patients):
+            return jsonify(error="Người này đã đặt lịch rồi"), 403
 
         if len(appointment_patients) < limit:
             ma = dao.make_appointment(appointment=appointment, patient_id=patient_id)  # Tạo cuộc hẹn mới
-            return jsonify(ma)
+            return jsonify(message="Đặt lịch thành công",appointment=ma),200
         else:
-            return {"error": "không còn lịch trống"}, 403
+            return jsonify(error="ngày này đã đủ bệnh nhân"), 403
     else:
         # Nếu không có cuộc hẹn nào, thêm một cuộc hẹn mới
         a = dao.add_appointment_list(date)  # Giả sử bạn cần truyền ngày vào hàm này
         ma = dao.make_appointment(appointment=a, patient_id=patient_id)  # Tạo cuộc hẹn mới
-    return jsonify(ma)
+    return jsonify(message="Đặt lịch thành công",appointment=ma), 200
 
 
 @app.route('/add_patient', methods=['POST'])
