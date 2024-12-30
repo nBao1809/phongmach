@@ -30,7 +30,6 @@
                 <th>Họ và Tên</th>
                 <th>Ngày Sinh</th>
                 <th>Số Điện Thoại</th>
-                <th>Địa Chỉ</th>
                 <th>Giới Tính</th>
                 <th>Hành Động</th>
             </tr>
@@ -39,33 +38,32 @@
             </tbody>
         </table>
         <div class="d-grid gap-2 mt-3">
-            <button class="btn btn-success rounded-pill" id="confirm-day">Xác nhận toàn bộ</button>
+            <button class="btn btn-success rounded-pill" id="confirm-day" onclick="confirmDay()">Xác nhận toàn bộ</button>
         </div>
     </div>
 </div>
 
 <script>
+    const tableBody = document.getElementById('patient-table-body');
+    const patientList = document.getElementById('patient-list');
     document.getElementById('form-select-date').addEventListener('submit', async function (e) {
         e.preventDefault();
         const selectedDate = document.getElementById('selectDate').value;
-
         // Fetch danh sách bệnh nhân
-        const res = fetch(`/api/patients?date=${selectedDate}`);
-        const data = res.json();
-
-        const tableBody = document.getElementById('patient-table-body');
-        const patientList = document.getElementById('patient-list');
+        const res = await
+            fetch(`/api/patients?date=${selectedDate}`)
+        const data = await res.json()
+        sessionStorage.setItem("currentList", JSON.stringify(data))
         tableBody.innerHTML = '';
         if (data.patients.length > 0) {
             patientList.style.display = 'block';
             data.patients.forEach((patient, index) => {
                 const row = `
-                            <tr>
+                            <tr itemid="patient-${patient.id}">
                                 <td>${index + 1}</td>
-                                <td>${patient.full_name}</td>
-                                <td>${patient.birth_date}</td>
-                                <td>${patient.phone}</td>
-                                <td>${patient.address}</td>
+                                <td>${patient.name}</td>
+                                <td>${patient.birthday}</td>
+                                <td>${patient.sdt}</td>
                                 <td>${patient.gender}</td>
                                 <td>
                                 <button class="btn btn-sm btn-warning" onclick="editPatient(${patient.id})">Sửa</button>
@@ -81,36 +79,41 @@
 
     });
 
-    document.getElementById('confirm-day').addEventListener('click', function () {
+   async function confirmDay () {
         const selectedDate = document.getElementById('selectDate').value;
-
         // Xác nhận toàn bộ danh sách của ngày
-        fetch(`/api/confirm-day?date=${selectedDate}`, {method: 'POST'})
-            .then(response => {
-                if (response.ok) {
+        const res= await fetch(`/api/confirm-day?date=${selectedDate}`, {method: 'POST'})
+            const data=await res.json()
+                if (data.success) {
                     alert('Đã xác nhận toàn bộ danh sách khám ngày ' + selectedDate);
                     document.getElementById('form-select-date').submit(); // Làm mới giao diện
-
                     const toast = document.createElement('div');
                     toast.classList.add('alert', 'alert-success');
                     toast.textContent = 'Danh sách khám ngày ' + selectedDate + ' đã được xác nhận.';
                     document.body.appendChild(toast);
                 }
-            });
-    });
+            ;
+    }
 
     function editPatient(id) {
         alert('Chức năng sửa bệnh nhân (ID: ' + id + ') chưa được triển khai.');
     }
 
-    function deletePatient(id) {
+    async function deletePatient(id) {
         if (confirm('Bạn có chắc muốn xóa bệnh nhân này?')) {
-            fetch(`/api/patient/${id}`, {
-                method: 'DELETE'
-            }).then(() => {
-                alert('Xóa thành công!');
-                document.getElementById('form-select-date').submit();
-            });
+            const res = await fetch(`/api/patient/${id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({'appointment_id': JSON.parse(sessionStorage.getItem("currentList")).appointment_id})
+                }
+            )
+            const data = await res.json()
+            alert(data.success);
+            tableBody.remove(document.querySelector(`#patient-${id}`))
+            // document.getElementById('form-select-date').submit();
+
         }
     }
 </script>

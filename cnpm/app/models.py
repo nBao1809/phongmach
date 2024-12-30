@@ -1,11 +1,11 @@
 import hashlib
 
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey, Enum, DateTime
+from sqlalchemy import Column, ForeignKey, Enum
 from sqlalchemy.orm import relationship
+
 from app import db, app
 from enum import Enum as RoleEnum
 from flask_login import UserMixin
-from datetime import datetime
 
 
 class UserEnum(RoleEnum):
@@ -53,9 +53,10 @@ class Medication_units(db.Model):
 
 class Appointment_list(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    date = db.Column(db.DateTime, nullable=False, unique=True)
-    status = db.Column(db.Boolean, nullable=False)
+    date = db.Column(db.Date, nullable=False, unique=True)
+    status = db.Column(db.Boolean, nullable=False,default=0)
     total = db.Column(db.Integer, nullable=True)
+
 
 class Patient_Appointment(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
@@ -70,7 +71,8 @@ class Medication(db.Model):
     medication_unit_id = db.Column(db.Integer, ForeignKey("medication_units.id"), nullable=False, index=True)
     medication_consultations = relationship("Medication_consultation", backref="medication_units", lazy=True,
                                             cascade="all, delete-orphan")
-    instructions=db.Column(db.Text, nullable=False)
+    instructions = db.Column(db.Text, nullable=False)
+
     def __str__(self):
         return self.name
 
@@ -107,17 +109,6 @@ class Regulation(db.Model):
     regulation = db.Column(db.Integer, nullable=False)
 
 
-# if __name__ == '__main__':
-#     with app.app_context():
-#         db.create_all()
-#         if not User.query.first():
-#             u = User(name='a', username='a', password=str(hashlib.md5('123'.encode('utf-8')).hexdigest()),
-#                  user_role=UserEnum.ADMIN)
-#         db.session.add(u)
-#         db.session.commit()
-#         if not Regulation.query.first():
-#             r = Regulation(name="Giới hạn bệnh nhân", regulation=40)
-#             r2 = Regulation(name="Tiền khám", regulation=100000)
-#         db.session.add(r)
-#         db.session.add(r2)
-#         db.session.commit()
+if __name__ == "__main__":
+    with app.app_context():
+        db.drop_all()
