@@ -1,7 +1,7 @@
 import hashlib
 
 from app import db
-from app.models import User, Patient, Appointment_list, Patient_Appointment
+from app.models import User, Patient, Appointment_list, Patient_Appointment, Bill, Consultation_form
 
 
 def auth_user(username, password, role=None):
@@ -24,8 +24,6 @@ def get_patient_by_phone(phone):
     return Patient.query.filter(Patient.sdt.__eq__(phone)).first()
 
 
-# def add_shedule(date):
-#     limit=DailyPatientLimit.query.first()
 
 def add_appointment_list(date):
     # Kiểm tra xem cuộc hẹn đã tồn tại cho ngày này chưa
@@ -44,7 +42,8 @@ def add_appointment_list(date):
 
 
 def get_patient_appointment(patient_id, appointment_id):
-    return Patient_Appointment.query.filter(Patient_Appointment.appointment_id == appointment_id).first()
+    return Patient_Appointment.query.filter(
+        (Patient_Appointment.appointment_id == appointment_id) & (Patient_Appointment.patient_id == patient_id)).first()
 
 
 def make_appointment(patient_id, appointment):
@@ -91,13 +90,14 @@ def get_date():
     return sorted(date)
 
 
-def delete_patient_in_appointment(patient_id,appointment_id):
-    patient_appointment = Patient_Appointment.query.filter_by(appointment_id=appointment_id,patient_id=patient_id).first()
+def delete_patient_in_appointment(patient_id, appointment_id):
+    patient_appointment = Patient_Appointment.query.filter_by(appointment_id=appointment_id,
+                                                              patient_id=patient_id).first()
     if not patient_appointment:
         return {'error': 'Không tìm thấy bản ghi bệnh nhân trong cuộc hẹn.'}
     db.session.delete(patient_appointment)
     appointment = Appointment_list.query.get(appointment_id)
-    patient_appointment_check=Patient_Appointment.query.filter(appointment_id = appointment_id).first()
+    patient_appointment_check = Patient_Appointment.query.filter(appointment_id=appointment_id).first()
     if not patient_appointment_check:
         db.session.delete(appointment)
     db.session.commit()
@@ -108,4 +108,37 @@ def confirm_appointment(date):
     appointments = Appointment_list.query.filter_by(date=date).first()
     appointments.status = True
     db.session.commit()
-    return {'success':True}
+    return {'success': True}
+
+
+def update_patient(id, name, birthday, gender, sdt):
+    patient = Patient.query.get(id)
+    if patient is None:
+        return {'error': 'Bệnh nhân không tồn tại!'}
+    patient.name = name
+    patient.birthday = birthday
+    patient.sdt = sdt
+    patient.gender = gender
+    db.session.commit()
+    return {'message': 'Bệnh nhân đã được sửa thành công!'}
+
+
+def get_bill():
+    bill_dict=[]
+    bills = (
+        db.session.query(Bill)
+        .join(Consultation_form, Bill.consultation_id == Consultation_form.id)
+        .join(Patient, Consultation_form.patient_id == Patient.id)
+        .all()
+    )
+    for b in bills:
+        bill_dict[b.id]={
+            'id': b.id,
+            'patient_name': b.consultation_form.patient.name,
+            'date': b.date,
+            'medication_fee': b.medication_fee,
+            'consultation_fee': b.consultation_fee,
+            'total': b.total,
+            'status': b.status,
+        }
+    return bill_dict

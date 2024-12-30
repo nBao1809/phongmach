@@ -3,11 +3,10 @@ from datetime import date, datetime
 
 from flask import render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_user, logout_user, login_required
-from pyexpat.errors import messages
-
+from sendSMS import sendSMS
 from app import app, dao, login, db
 import admin
-from app.models import UserEnum, Regulation, User, Appointment_list, Patient_Appointment, Patient, GenderEnum
+from app.models import UserEnum, Regulation, User, Appointment_list, Patient_Appointment, Patient, GenderEnum, Bill
 
 
 @app.route('/')
@@ -66,8 +65,8 @@ def thanhtoan():
 # API lấy danh sách bệnh nhân theo ngày
 @app.route('/api/patients', methods=['GET', 'POST'])
 def get_patients():
-    dates = request.args.get('date')
-    appointment = Appointment_list.query.filter_by(date=dates).first()
+    date = request.args.get('date')
+    appointment = Appointment_list.query.filter_by(date=date).first()
     patients = dao.get_all_patients(appointment)
     return jsonify({'appointment_id': appointment.id, 'patients': patients})
 
@@ -86,8 +85,21 @@ def delete_patient(patient_id):
 
 @app.route('/api/confirm-day', methods=['POST'])
 def confirm_day():
-    date= request.args.get('date')
-    isConfirm=dao.confirm_appointment(date)
+    date = request.args.get('date')
+    isConfirm = dao.confirm_appointment(date)
+    appointment = Appointment_list.query.filter_by(date=date).first()
+    patients = dao.get_all_patients(appointment)
+    error_msg = []
+    for patient in patients:
+        msg = f"Kính gửi Quý khách {patient['name']}, lịch hẹn của bạn vào ngày {appointment.date}. Vui lòng đến đúng lịch. Cảm ơn!"
+        # result=sendSMS(message=msg, number=patient.sdt)
+        # if result.get('error'):
+        #     error_msg.append({
+        #         'patient_name': patient.name,
+        #         'number': patient.sdt,
+        #         'error': result['error']
+        #     })
+        # return jsonify({'appointment_id': appointment.id, 'patients': error_msg})
     return jsonify(isConfirm)
 
 
@@ -115,7 +127,7 @@ def login_admin_process():
 @app.route('/api/datlich', methods=['POST'])
 def api_datlich():
     date = request.get_json().get('date')  # Lấy ngày từ JSON
-    patient_id =int (request.get_json().get('patient_id'))
+    patient_id = int(request.get_json().get('patient_id'))
     limit_record = Regulation.query.filter(Regulation.name == 'Giới hạn bệnh nhân').first()
     if limit_record:
         limit = limit_record.regulation
@@ -157,17 +169,38 @@ def add_patient():
     else:
         genderValue = 'FEMALE'
     # Tạo đối tượng Patient
-    new_patient = Patient(name=name, gender=GenderEnum[genderValue], birthday=f'{birth_year}-01-01', sdt=phone)
+    new_patient = Patient(name=name, gender=GenderEnum[genderValue], birthday=birth_year, sdt=phone)
 
     isPatientExits = Patient.query.filter(Patient.sdt == new_patient.sdt).count() > 0
     if isPatientExits:
-        return jsonify(error='patient already exists'), 409
+        return jsonify(error='bệnh nhân đã tồn tại'), 409
     # Thêm vào cơ sở dữ liệu
     db.session.add(new_patient)
     db.session.commit()
 
     return jsonify({'message': 'Bệnh nhân đã được thêm thành công!', 'id': new_patient.id}), 201
 
+
+@app.route('/api/patient/<int:patient_id>', methods=['PUT'])
+def update_patient(patient_id):
+    data = request.get_json()
+    id = patient_id
+    name = data.get('name')
+    birthday = data.get('birthday')
+    sdt = data.get('sdt')
+    gender = data.get('gender')
+    if (gender == 'nam'):
+        genderValue = 'MALE'
+    else:
+        genderValue = 'FEMALE'
+    result = dao.update_patient(id=id, name=name, birthday=birthday, gender=GenderEnum[genderValue], sdt=sdt)
+    return jsonify(result)
+
+
+@app.route('/api/get_bill')
+def get_all_bill():
+    bill=dao.get_bill()
+    return jsonify(bill)
 
 if __name__ == '__main__':
     with app.app_context():

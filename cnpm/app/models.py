@@ -1,6 +1,7 @@
 import hashlib
 
 from sqlalchemy import Column, ForeignKey, Enum
+from sqlalchemy.dialects.mysql import LONGTEXT
 from sqlalchemy.orm import relationship
 
 from app import db, app
@@ -40,7 +41,7 @@ class Patient(db.Model):
             "id": self.id,
             "name": self.name,
             "gender": self.gender.value,
-            "birthday": self.birthday.year,
+            "birthday": self.birthday.strftime("%Y-%m-%d"),
             "sdt": self.sdt,
         }
 
@@ -79,12 +80,12 @@ class Medication(db.Model):
 
 class Consultation_form(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    date = db.Column(db.DateTime, nullable=False)
+    date = db.Column(db.Date, nullable=False)
     patient_id = db.Column(db.Integer, ForeignKey("patient.id"), nullable=False, index=True)
     # chan doan
-    diagnosis = db.Column(db.String(255), nullable=False)
+    diagnosis = db.Column(db.Text, nullable=False)
     #   trieu chung
-    symptoms = db.Column(db.String(255), nullable=False)
+    symptoms = db.Column(db.Text, nullable=False)
     medication_consultations = relationship("Medication_consultation", backref="consultation")
 
 
@@ -99,6 +100,8 @@ class Bill(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     date = db.Column(db.DateTime, nullable=False)
     consultation_id = db.Column(db.Integer, ForeignKey("consultation_form.id"), nullable=False, index=True)
+    medication_fee=db.Column(db.Integer, nullable=False)
+    consultation_fee=db.Column(db.Integer, nullable=False)
     total = db.Column(db.Integer, nullable=False)
     status = db.Column(db.Boolean, nullable=False)
 

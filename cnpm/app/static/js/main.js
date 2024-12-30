@@ -43,7 +43,7 @@ function usePatientInfo() {
     // Điền dữ liệu vào các ô nhập liệu
     document.getElementById("Ten").value = name;
     document.getElementById("phone1").value = phone;
-    document.getElementById("namSinh").value = birthYear;
+    document.getElementById("ngaySinh").value = birthYear;
     // Đặt giới tính vào radio button
     if (gender === "nam") {
         document.getElementById("nam").checked = true;
@@ -54,7 +54,7 @@ function usePatientInfo() {
     // Chuyển các ô nhập liệu thành readonly
     document.getElementById("Ten").readOnly = true;
     document.getElementById("phone1").readOnly = true;
-    document.getElementById("namSinh").readOnly = true;
+    document.getElementById("ngaySinh").readOnly = true;
     // Khóa radio button (không cho thay đổi giới tính)
     document.getElementById("nam").disabled = true;
     document.getElementById("nu").disabled = true;
@@ -73,7 +73,7 @@ function resetSearch() {
     document.getElementById("nu").disabled = false;
     document.getElementById("Ten").readOnly = false;
     document.getElementById("phone1").readOnly = false;
-    document.getElementById("namSinh").readOnly = false;
+    document.getElementById("ngaySinh").readOnly = false;
     document.getElementById("thembn").disabled = false
     const isDatLich = document.querySelectorAll(".isDatLich")
     document.getElementById('resultContainer').classList.add('hidden')
@@ -89,7 +89,7 @@ function addPatient() {
     const patientData = {
         name: document.getElementById('Ten').value,
         phone: document.getElementById('phone1').value,
-        birthYear: document.getElementById('namSinh').value,
+        birthYear: document.getElementById('ngaySinh').value,
         gender: document.querySelector('input[name="gioiTinh"]:checked').value,
     };
 
@@ -108,13 +108,14 @@ function addPatient() {
                 sessionStorage.setItem("patient_id", data.id)
                 document.getElementById("Ten").readOnly = true;
                 document.getElementById("phone1").readOnly = true;
-                document.getElementById("namSinh").readOnly = true;
+                document.getElementById("ngaySinh").readOnly = true;
                 // Khóa radio button (không cho thay đổi giới tính)
                 document.getElementById("nam").disabled = true;
                 document.getElementById("nu").disabled = true;
             }
+            if(data.message)
             alert(data.message);
-
+            else alert(data.error)
         })
         .catch(error => {
             console.error('Lỗi khi fetch:', error);
@@ -146,12 +147,14 @@ async function datLich() {
     document.getElementById("nu").disabled = false;
     document.getElementById("Ten").readOnly = false;
     document.getElementById("phone1").readOnly = false;
-    document.getElementById("namSinh").readOnly = false;
+    document.getElementById("ngaySinh").readOnly = false;
     document.getElementById("thembn").disabled = false
     resetForm()
     if (data.success)
         alert(data.success)
     else alert(data.error)
 }
+//endregion
+// region Danh sách khám
 
 //endregion

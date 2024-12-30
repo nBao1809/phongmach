@@ -50,11 +50,12 @@
     ];
 
     // Hiển thị danh sách hóa đơn
-    function loadInvoices(sortedInvoices = fakeInvoices) {
+    async function loadInvoices(sortedInvoices = fakeInvoices) {
         const tableBody = document.getElementById('invoices-table-body');
         tableBody.innerHTML = ''; // Xóa nội dung cũ
-
-        sortedInvoices.forEach((invoice, index) => {
+const res=await fetch('/api/get_bill/')
+        const data= await res.json()
+        data.forEach((invoice, index) => {
             const row = `
                 <tr>
                     <td>${invoice.id}</td>
@@ -64,7 +65,7 @@
                     <td>${invoice.medication_fee}</td>
                     <td>${invoice.total}</td>
                     <td>
-                        ${invoice.status === 'unpaid' ?
+                        ${invoice.status === True ?
                             `<button class="btn btn-success btn-sm" onclick="confirmPayment(${invoice.id})">Xác nhận thanh toán</button>` :
                             'Đã thanh toán'}
                     </td>
