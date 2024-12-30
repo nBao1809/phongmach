@@ -54,7 +54,7 @@ class Medication_units(db.Model):
 class Appointment_list(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     date = db.Column(db.Date, nullable=False, unique=True)
-    status = db.Column(db.Boolean, nullable=False,default=0)
+    status = db.Column(db.Boolean, nullable=False, default=0)
     total = db.Column(db.Integer, nullable=True)
 
 
@@ -76,10 +76,14 @@ class Medication(db.Model):
     def __str__(self):
         return self.name
 
+    @property
+    def medication_unit_name(self):
+        return self.unit_medications.unit if self.unit_medications else "Không xác định"
+
 
 class Consultation_form(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    date = db.Column(db.DateTime, nullable=False)
+    date = db.Column(db.Date, nullable=False)
     patient_id = db.Column(db.Integer, ForeignKey("patient.id"), nullable=False, index=True)
     # chan doan
     diagnosis = db.Column(db.String(255), nullable=False)
@@ -101,13 +105,15 @@ class Bill(db.Model):
     consultation_id = db.Column(db.Integer, ForeignKey("consultation_form.id"), nullable=False, index=True)
     total = db.Column(db.Integer, nullable=False)
     status = db.Column(db.Boolean, nullable=False)
+    medication_fee = db.Column(db.Integer, nullable=False)
+    consultation_fee = db.Column(db.Integer, nullable=False)
+
 
 
 class Regulation(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.String(255), nullable=False)
     regulation = db.Column(db.Integer, nullable=False)
-
 
 if __name__ == "__main__":
     with app.app_context():

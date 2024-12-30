@@ -9,7 +9,7 @@
     </div>
 
     <!-- Danh sách các phiếu khám -->
-    <div id="prescriptions-list">
+    <div id="consultation_form-list">
         <table class="table table-bordered table-hover">
             <thead>
             <tr>
@@ -19,7 +19,7 @@
                 <th>Hành Động</th>
             </tr>
             </thead>
-            <tbody id="prescriptions-table-body">
+            <tbody id="consultation_form-table-body">
             <!-- Dữ liệu sẽ được nạp từ API -->
             </tbody>
         </table>
@@ -28,10 +28,15 @@
     <!-- Form Thêm Phiếu Khám -->
     <div id="add-prescription-form" style="display: none;">
         <h4 class="text-dark" style="font-weight: bold;">Thêm Phiếu Khám</h4>
-        <form id="prescription-form">
+        <form id="consultation-form">
             <div class="mb-3">
-                <label for="date" class="form-label text-dark" style="font-weight: bold;">Ngày Khám</label>
-                <input type="date" class="form-control" id="date" required>
+                <label for="selectDate" class="form-label text-dark" style="font-weight: bold;">Chọn ngày</label>
+                <select class="form-control" id="selectDate" name="selectDate" required>
+                    <option value="" disabled selected>-- Chọn ngày --</option>
+                    {% for date in available_dates %}
+                    <option value="{{ date }}">{{ date }}</option>
+                    {% endfor %}
+                </select>
             </div>
 
             <div class="mb-3">
@@ -39,7 +44,9 @@
                 <select class="form-control" id="patient" required>
                     <option value="" disabled selected>-- Chọn Bệnh Nhân --</option>
                     {% for patient in patients %}
-                    <option value="{{ patient.id }}">{{ patient.full_name }}</option>
+                    <option value="{{ patient.id }}">
+                        {{ patient.full_name }} - {{ patient.phone_number }}
+                    </option>
                     {% endfor %}
                 </select>
             </div>
@@ -56,13 +63,14 @@
             <div class="row">
                 <div class="mb-3 col">
                     <label for="medication" class="form-label text-dark" style="font-weight: bold;">Chọn Thuốc</label>
-                    <select class="form-control" id="medication" required>
-                        <option value="" disabled selected>-- Chọn Thuốc --</option>
+                    <select class="form-control" id="medication">
+                        <option value="" selected disabled>-- Chọn Thuốc --</option>
                         {% for medicine in medicines %}
                         <option value="{{ medicine.id }}">{{ medicine.name }}</option>
                         {% endfor %}
                     </select>
                 </div>
+
                 <div class="mb-3 col">
                     <label for="quantity" class="form-label text-dark" style="font-weight: bold;">Số Lượng</label>
                     <input type="number" class="form-control" id="quantity" required min="1">
@@ -74,15 +82,13 @@
             <div id="selected-medications" class="mb-3">
                 <!-- Các thuốc sẽ được thêm vào đây -->
             </div>
-
-
-            <button type="submit" class="btn btn-primary">Lưu Phiếu Khám</button>
+            <button type="submit" class="btn btn-primary" onclick="">Lưu Phiếu Khám</button>
             <button type="button" class="btn btn-secondary" onclick="goBack()">Hủy</button>
         </form>
     </div>
 
     <!-- Thông tin chi tiết phiếu khám khi nhấn vào -->
-    <div id="prescription-details" style="display: none;">
+    <div id="consultation_form-details" style="display: none;">
         <h4>Thông tin chi tiết Phiếu Khám</h4>
         <div id="patient-name"></div>
         <div id="symptoms-detail"></div>
@@ -99,139 +105,396 @@
     // Hiển thị form thêm phiếu khám
     function showAddPrescriptionForm() {
         document.getElementById('themPK').style.display = 'none';
-        document.getElementById('prescriptions-list').style.display = 'none';  // Ẩn danh sách phiếu khám
+        document.getElementById('consultation_form-list').style.display = 'none';  // Ẩn danh sách phiếu khám
         document.getElementById('add-prescription-form').style.display = 'block';  // Hiển thị form thêm phiếu khám
     }
 
     // Quay lại danh sách phiếu khám
     function goBack() {
         document.getElementById('themPK').style.display = 'block';
-        document.getElementById('prescriptions-list').style.display = 'block';  // Hiển thị lại danh sách phiếu khám
+        document.getElementById('consultation_form-list').style.display = 'block';  // Hiển thị lại danh sách phiếu khám
         document.getElementById('add-prescription-form').style.display = 'none';  // Ẩn form thêm phiếu khám
-        document.getElementById('prescription-details').style.display = 'none';  // Ẩn chi tiết phiếu khám
+        document.getElementById('consultation_form-details').style.display = 'none';  // Ẩn chi tiết phiếu khám
     }
 
-    // Thêm thuốc vào danh sách thuốc đã chọn
-    function addMedication() {
-        const medicationId = document.getElementById('medication').value;
-        const medicationName = document.getElementById('medication').options[document.getElementById('medication').selectedIndex].text;
-        const quantity = document.getElementById('quantity').value;
-        const usage = document.getElementById('usage').value;
-        const unit =document.getElementById('unit').value;
-        if (medicationId && !selectedMedications.some(item => item.id === medicationId)) {
-            selectedMedications.push({ id: medicationId, name: medicationName,quantity, usage, unit });
-            updateMedicationList();
-        }
-    }
 
-    // Cập nhật danh sách thuốc đã chọn
-    function updateMedicationList() {
-        const selectedMedicationsContainer = document.getElementById('selected-medications');
-        selectedMedicationsContainer.innerHTML = '';  // Xóa danh sách cũ
-
-        selectedMedications.forEach((medication, index) => {
-            const medItem = document.createElement('div');
-            medItem.innerHTML = `
-                <span>${medication.name}</span>
-                <button type="button" class="btn btn-danger btn-sm" onclick="removeMedication(${index})">Xóa</button>
-            `;
-            selectedMedicationsContainer.appendChild(medItem);
-        });
-    }
-
-    // Xóa thuốc khỏi danh sách
-    function removeMedication(index) {
-        selectedMedications.splice(index, 1);
-        updateMedicationList();
-    }
-
-    // Gửi form và tạo phiếu khám mới
-    document.getElementById('prescription-form').addEventListener('submit', function(e) {
-        e.preventDefault();
-
-        const date = document.getElementById('date').value;
-        const patientId = document.getElementById('patient').value;
-        const symptoms = document.getElementById('symptoms').value;
-        const diagnosis = document.getElementById('diagnosis').value;
-        const quantity = document.getElementById('quantity').value;
-
-        // Tạo mảng thuốc và số lượng từ danh sách đã chọn
-        const medications = selectedMedications.map(medication => ({
-            medication_id: medication.id,
-            quantity
-        }));
-
-        const prescriptionData = {
-            date,
-            patient_id: patientId,
-            symptoms,
-            diagnosis,
-            medications
-        };
-
-        fetch('/api/prescriptions', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(prescriptionData)
-        })
+// Tải danh sách thuốc từ API
+function loadMedications() {
+    fetch('/api/medications')
         .then(response => response.json())
         .then(data => {
-            if (data.success) {
-                alert('Thêm phiếu khám thành công!');
-                goBack(); // Quay lại danh sách phiếu khám
-                loadPrescriptions(); // Làm mới danh sách phiếu khám
-            } else {
-                alert('Có lỗi xảy ra, vui lòng thử lại.');
-            }
+            const medicationSelect = document.getElementById('medication');
+            medicationSelect.innerHTML = ''; // Xóa nội dung cũ
+
+            const defaultOption = document.createElement('option');
+            defaultOption.value = '';
+            defaultOption.textContent = '-- Chọn Thuốc --';
+            defaultOption.disabled = true;
+            defaultOption.selected = true;
+            medicationSelect.appendChild(defaultOption);
+
+            data.forEach(med => {
+                const option = document.createElement('option');
+                option.value = med.id;
+                option.textContent = med.name;
+                // Lưu thêm thông tin vào thuộc tính data
+                option.dataset.price = med.price;
+                option.dataset.instructions = med.instructions;
+                option.dataset.unit = med.medication_unit_id;
+                medicationSelect.appendChild(option);
+            });
+        })
+        .catch(error => {
+            console.error('Error loading medications:', error);
         });
+}
+
+
+function addMedication() {
+    const medicationSelect = document.getElementById('medication');
+    const medicationId = medicationSelect.value;
+    const medicationName = medicationSelect.options[medicationSelect.selectedIndex]?.text || '';
+    const instructions = medicationSelect.options[medicationSelect.selectedIndex]?.dataset.instructions || '';
+    const medicationUnitId = medicationSelect.options[medicationSelect.selectedIndex]?.dataset.unit || '';
+    const quantity = parseInt(document.getElementById('quantity').value, 10);
+
+    if (!medicationId) {
+        alert('Vui lòng chọn thuốc.');
+        return;
+    }
+    if (isNaN(quantity) || quantity <= 0) {
+        alert('Vui lòng nhập số lượng hợp lệ.');
+        return;
+    }
+
+    // Kiểm tra xem thuốc đã được thêm chưa
+    const isAlreadyAdded = selectedMedications.some(item => item.id === medicationId);
+    if (isAlreadyAdded) {
+        alert('Thuốc đã được thêm vào danh sách.');
+        return;
+    }
+
+    // Lấy đơn vị thuốc từ API hoặc ánh xạ cục bộ
+    fetch(`/api/medication_units/${medicationUnitId}`)
+        .then(response => response.json())
+        .then(unitData => {
+            const unit = unitData.unit;
+
+            // Thêm thuốc vào danh sách đã chọn
+            selectedMedications.push({
+                id: medicationId,
+                name: medicationName,
+                quantity,
+                instructions,
+                unit
+            });
+
+            // Ẩn thuốc khỏi dropdown
+            medicationSelect.options[medicationSelect.selectedIndex].classList.add('hidden');
+            medicationSelect.value = "";
+
+
+            document.getElementById('quantity').value = 1;
+            // Cập nhật danh sách hiển thị
+            updateMedicationList();
+        })
+        .catch(error => {
+            console.error('Error fetching unit data:', error);
+            alert('Không thể lấy thông tin đơn vị thuốc.');
+        });
+}
+
+// Cập nhật danh sách thuốc hiển thị
+function updateMedicationList() {
+    const selectedMedicationsContainer = document.getElementById('selected-medications');
+    selectedMedicationsContainer.innerHTML = ''; // Xóa danh sách cũ
+
+    selectedMedications.forEach((medication, index) => {
+        const medItem = document.createElement('div');
+        medItem.classList.add('medication-item', 'mb-2', 'p-2', 'border', 'rounded'); // Tùy chỉnh kiểu hiển thị
+        medItem.innerHTML = `
+            <div><strong>Tên thuốc:</strong> ${medication.name}</div>
+            <div><strong>Đơn vị:</strong> ${medication.unit}</div>
+            <div><strong>Số lượng:</strong> ${medication.quantity}</div>
+            <div><strong>Cách dùng:</strong> ${medication.instructions}</div>
+            <button type="button" class="btn btn-danger btn-sm mt-2" onclick="removeMedication(${index})">Xóa</button>
+        `;
+        selectedMedicationsContainer.appendChild(medItem);
     });
 
-    // Lấy danh sách các phiếu khám
-    function loadPrescriptions() {
-        fetch('/api/prescriptions')
-            .then(response => response.json())
-            .then(data => {
-                const tableBody = document.getElementById('prescriptions-table-body');
-                tableBody.innerHTML = ''; // Xóa nội dung cũ
+    // Hiển thị thông báo nếu không có thuốc nào
+    if (selectedMedications.length === 0) {
+        selectedMedicationsContainer.innerHTML = '<div class="text-muted">Chưa có thuốc nào được thêm.</div>';
+    }
+}
 
-                data.prescriptions.forEach((prescription, index) => {
-                    const row = `
-                        <tr>
-                            <td>${index + 1}</td>
-                            <td>${prescription.date}</td>
-                            <td>
-                                <a href="#" onclick="showPrescriptionDetails(${prescription.id})">${prescription.patient_name}</a>
-                            </td>
-                            <td>
-                                <button class="btn btn-warning btn-sm" onclick="editPrescription(${prescription.id})">Sửa</button>
-                                <button class="btn btn-danger btn-sm" onclick="deletePrescription(${prescription.id})">Xóa</button>
-                            </td>
-                        </tr>
-                    `;
-                    tableBody.insertAdjacentHTML('beforeend', row);
+// Xóa thuốc khỏi danh sách đã chọn
+function removeMedication(index) {
+    // Lấy thông tin thuốc cần xóa
+    const removedMedication = selectedMedications[index];
+
+    // Hiển thị lại thuốc trong dropdown
+    const medicationSelect = document.getElementById('medication');
+    const optionToUnhide = Array.from(medicationSelect.options).find(option => option.value === removedMedication.id);
+    if (optionToUnhide) {
+        optionToUnhide.classList.remove('hidden');
+    }
+
+    // Xóa thuốc khỏi danh sách đã chọn
+    selectedMedications.splice(index, 1);
+
+    // Cập nhật danh sách hiển thị
+    updateMedicationList();
+}
+
+
+document.getElementById('selectDate').addEventListener('change', function() {
+    const selectedDate = this.value;
+
+    // Gọi API để lấy danh sách bệnh nhân chưa có phiếu khám cho ngày đã chọn
+    fetch(`/api/available_patients?date=${selectedDate}`)
+        .then(response => response.json())
+        .then(data => {
+            const patientSelect = document.getElementById('patient');
+            patientSelect.innerHTML = '<option value="" disabled selected>-- Chọn Bệnh Nhân --</option>';  // Reset dropdown
+
+            // Thêm các bệnh nhân vào dropdown
+            data.patients.forEach(patient => {
+                const option = document.createElement('option');
+                option.value = patient.id;
+                option.textContent = `${patient.name} - ${patient.sdt}`;
+                patientSelect.appendChild(option);
+            });
+        })
+        .catch(error => {
+            console.error('Error fetching patients for selected date:', error);
+        });
+});
+
+
+
+
+// Gửi form và tạo phiếu khám mới
+document.getElementById('consultation-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    const date = document.getElementById('selectDate').value;
+    const patientId = document.getElementById('patient').value;
+    const symptoms = document.getElementById('symptoms').value;
+    const diagnosis = document.getElementById('diagnosis').value;
+    if(selectedMedications.length===0){
+            alert('Vui lòng thêm thuốc');
+        return;
+    }
+
+
+
+
+
+    // Tạo mảng thuốc và số lượng từ danh sách đã chọn
+    const medications = selectedMedications.map(medication => ({
+        medication_id: medication.id,
+        quantity: medication.quantity // Sử dụng quantity từ thuốc đã chọn
+    }));
+
+    const prescriptionData = {
+        date,
+        patient_id: patientId,
+        symptoms,
+        diagnosis,
+        medications
+    };
+
+    // Gửi yêu cầu POST để tạo phiếu khám mới
+    fetch('/api/consultation_form', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(prescriptionData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Thêm phiếu khám thành công!');
+
+            const consultationId = data.consultation_id;
+
+            // Tạo dữ liệu cho hóa đơn
+            const billData = {
+                consultation_id: consultationId,
+                medications: medications
+            };
+
+            // Gửi yêu cầu POST để tạo hóa đơn
+            fetch('/api/create_bill', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(billData)
+            })
+            .then(response => response.json())
+            .then(billData => {
+                if (billData.success) {
+                    alert('Hóa đơn đã được tạo thành công!');
+                } else {
+                    alert('Có lỗi xảy ra khi tạo hóa đơn: ' + billData.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error creating bill:', error);
+            });
+
+
+            selectedMedications = [];  // Reset lại danh sách thuốc đã chọn
+            updateMedicationList();  // Cập nhật lại danh sách thuốc đã chọn (sẽ hiển thị thông báo "Chưa có thuốc nào được thêm.")
+
+            // Reset các trường nhập liệu trong form
+            document.getElementById('consultation-form').reset(); // Reset form
+            document.getElementById('medication').value = '';  // Reset dropdown thuốc
+            document.getElementById('quantity').value = 1;  // Reset số lượng
+
+
+            // Reset bệnh nhân đã chọn
+            const patientSelect = document.getElementById('patient');
+            patientSelect.value = '';  // Reset giá trị bệnh nhân
+
+
+
+            // Hiển thị lại dropdown thuốc nếu nó bị ẩn
+            const medicationSelect = document.getElementById('medication');
+            Array.from(medicationSelect.options).forEach(option => {
+                option.classList.remove('hidden');
+            });
+
+            const selectedDate = document.getElementById('selectDate').value;
+            fetch(`/api/available_patients?date=${selectedDate}`)
+                .then(response => response.json())
+                .then(data => {
+                    const patientSelect = document.getElementById('patient');
+                    patientSelect.innerHTML = '<option value="" disabled selected>-- Chọn Bệnh Nhân --</option>';  // Reset dropdown
+
+                    // Thêm các bệnh nhân vào dropdown
+                    data.patients.forEach(patient => {
+                        const option = document.createElement('option');
+                        option.value = patient.id;
+                        option.textContent = `${patient.name} - ${patient.sdt}`;
+                        patientSelect.appendChild(option);
+                    });
+                })
+                .catch(error => {
+                    console.error('Error fetching updated patients:', error);
                 });
+
+
+        } else {
+            alert('Có lỗi xảy ra, vui lòng thử lại.');
+        }
+    })
+    .catch(error => {
+        console.error('Error adding prescription:', error);
+    });
+});
+
+function loadPrescriptions() {
+    fetch('/api/consultation_form')
+        .then(response => response.json())
+        .then(data => {
+            const tableBody = document.getElementById('consultation_form-table-body');
+            tableBody.innerHTML = ''; // Xóa nội dung cũ
+
+            data.forEach((consultation_form, index) => {
+                const row = `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td>${consultation_form.date}</td>
+                        <td>
+                            <a href="#" onclick="showconsultation_formDetails(${consultation_form.id})">${consultation_form.patient_name}</a>
+                        </td>
+                        <td>
+                            <button class="btn btn-danger btn-sm" onclick="deleteconsultation_form(${consultation_form.id})">Xóa</button>
+                        </td>
+                    </tr>
+                `;
+                tableBody.insertAdjacentHTML('beforeend', row);
             });
+        })
+        .catch(error => {
+            console.error('Error fetching consultation forms:', error);
+        });
+}
+
+function showconsultation_formDetails(id) {
+    fetch(`/api/consultation_form/${id}`)
+        .then(response => response.json())
+        .then(data => {
+            // Hiển thị chi tiết
+            document.getElementById('consultation_form-details').style.display = 'block';
+            document.getElementById('consultation_form-list').style.display = 'none';
+
+            // Thêm thông tin bệnh nhân
+            document.getElementById('patient-name').innerHTML = `
+                <h3><strong>Bệnh Nhân:</strong> <span style="font-weight: bold; color: black;">${data.patient_name}</span></h3>`;
+            document.getElementById('symptoms-detail').innerHTML = `
+                <p><strong>Triệu Chứng:</strong> <span style="font-weight: bold; color: black;">${data.symptoms}</span></p>`;
+            document.getElementById('diagnosis-detail').innerHTML = `
+                <p><strong>Chẩn Đoán:</strong> <span style="font-weight: bold; color: black;">${data.diagnosis}</span></p>`;
+
+            // Thêm thông tin thuốc
+            const medicationList = data.medications.map(med => `
+                <tr>
+                    <td style="font-weight: bold; color: black;">${med.name}</td>
+                    <td style="font-weight: bold; color: black;">${med.quantity}</td>
+                </tr>
+            `).join('');
+
+            document.getElementById('medication-detail').innerHTML = `
+                <h4><strong>Danh Sách Thuốc:</strong></h4>
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th style="font-weight: bold; color: black;">Tên Thuốc</th>
+                            <th style="font-weight: bold; color: black;">Số Lượng</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${medicationList}
+                    </tbody>
+                </table>
+            `;
+        })
+        .catch(error => {
+            console.error('Error fetching consultation form details:', error);
+        });
+}
+
+
+// Xóa phiếu khám
+function deleteconsultation_form(id) {
+    if (confirm('Bạn có chắc chắn muốn xóa phiếu khám này?')) {
+        fetch(`/api/consultation_form/${id}`, {
+            method: 'DELETE'
+        })
+        .then(response => {
+            if (response.ok) {
+                alert('Xóa phiếu khám thành công!');
+                loadPrescriptions(); // Làm mới danh sách phiếu khám
+            } else {
+                alert('Có lỗi xảy ra khi xóa phiếu khám');
+            }
+        })
+        .catch(error => {
+            console.error('Error deleting consultation form:', error);
+        });
     }
+}
 
-    // Hiển thị chi tiết phiếu khám
-    function showPrescriptionDetails(id) {
-        fetch(`/api/prescriptions/${id}`)
-            .then(response => response.json())
-            .then(data => {
-                document.getElementById('prescription-details').style.display = 'block';
-                document.getElementById('prescriptions-list').style.display = 'none';
 
-                document.getElementById('patient-name').innerText = `Bệnh Nhân: ${data.patient_name}`;
-                document.getElementById('symptoms-detail').innerText = `Triệu Chứng: ${data.symptoms}`;
-                document.getElementById('diagnosis-detail').innerText = `Chẩn Đoán: ${data.diagnosis}`;
-                document.getElementById('medication-detail').innerText = `Thuốc: ${data.medications.map(m => m.name).join(', ')}`;
-                document.getElementById('quantity-detail').innerText = `Số Lượng: ${data.medications.map(m => m.quantity).join(', ')}`;
-            });
-    }
-
-    // Tải danh sách phiếu khám khi trang được tải
-    window.onload = loadPrescriptions;
+// Tải danh sách phiếu khám khi trang được tải
+window.onload = function() {
+    loadPrescriptions(); // Tải danh sách phiếu khám
+    loadMedications(); // Tải danh sách thuốc
+};
 </script>
 {% endblock %}

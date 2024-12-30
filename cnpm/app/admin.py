@@ -1,6 +1,8 @@
 import hashlib
 
-from app.models import Medication, Medication_units, User, UserEnum, Regulation,Patient
+from flask_admin.contrib.sqla.fields import QuerySelectField
+
+from app.models import Medication, Medication_units, User, UserEnum, Regulation, Patient
 from flask_admin import Admin, BaseView, expose, AdminIndexView
 from app import app, db
 from flask_admin.contrib.sqla import ModelView
@@ -17,12 +19,9 @@ class MyAdminIndexView(AdminIndexView):
 admin = Admin(app=app, name='Phòng mạch', template_mode='bootstrap4', index_view=MyAdminIndexView())
 
 
-
-
 class AdminView(ModelView):
     def is_accessible(self):
         return current_user.is_authenticated and current_user.user_role.__eq__(UserEnum.ADMIN)
-
 
 
 class UserView(AdminView):
@@ -42,37 +41,62 @@ class UserView(AdminView):
 
         self.change = super().on_model_change(form, model, is_created)
         return self.change
+
+
 class MedicationView(AdminView):
-    column_list = ['name', 'price','instructions']
+    column_list = ['name', 'price', 'instructions', 'medication_unit_name']
     column_searchable_list = ['name']
-    column_editable_list = ['name','price','instructions']
+    column_editable_list = ['name', 'price', 'instructions']
     can_export = True
+
     column_labels = {
-        'name':'Tên thuốc',
-        'price':'Giá bán',
-        'instructions':'Cách sử dụng'
+        'name': 'Tên thuốc',
+        'price': 'Giá bán',
+        'instructions': 'Cách sử dụng',
+        'medication_unit_name': 'Đơn vị',
+    }
+    form_columns = ['name', 'price', 'instructions', 'medication_unit_id']
+    # Override form field for medication_unit_id
+    form_overrides = {
+        'medication_unit_id': QuerySelectField
     }
 
+    # Provide choices for medication_unit_id
+    form_args = {
+        'medication_unit_id': {
+            'query_factory': lambda: Medication_units.query.all(),
+            'get_label': 'unit',
+        }
+    }
+
+    def on_model_change(self, form, model, is_created):
+        # Chuyển đổi đối tượng thành ID
+        if isinstance(form.medication_unit_id.data, Medication_units):
+            model.medication_unit_id = form.medication_unit_id.data.id
+        super().on_model_change(form, model, is_created)
+
+
 class PatientView(AdminView):
-    column_list = ['id', 'name','gender','birthday','sdt']
+    column_list = ['id', 'name', 'gender', 'birthday', 'sdt']
     column_searchable_list = ['name']
-    column_editable_list = [ 'name','gender','birthday','sdt']
+    column_editable_list = ['name', 'gender', 'birthday', 'sdt']
     can_export = True
+
 
 class Medication_unitsView(AdminView):
     column_list = ['unit']
     column_editable_list = ['unit']
     column_labels = {
-        'unit':'Đơn vị'
+        'unit': 'Đơn vị'
     }
 
 
 class RegulationView(AdminView):
-    column_list = ['id','name','regulation']
-    column_editable_list = ['name','regulation']
+    column_list = ['id', 'name', 'regulation']
+    column_editable_list = ['name', 'regulation']
     column_labels = {
-        'name':'quy định',
-        'regulation':'nội dung'
+        'name': 'quy định',
+        'regulation': 'nội dung'
     }
 
 
@@ -88,10 +112,10 @@ class LogoutView(AuthenticatedView):
         return redirect('/admin')
 
 
-
-admin.add_view(MedicationView(Medication, db.session,name='Thuốc'))
-admin.add_view(PatientView(Patient, db.session,name="Bệnh nhân"))
-admin.add_view(Medication_unitsView(Medication_units, db.session,name="Đơn vị"))
-admin.add_view(RegulationView(Regulation, db.session,name="Quy định"))
+with app.app_context():
+    admin.add_view(MedicationView(Medication, db.session, name='Thuốc'))
+admin.add_view(PatientView(Patient, db.session, name="Bệnh nhân"))
+admin.add_view(Medication_unitsView(Medication_units, db.session, name="Đơn vị"))
+admin.add_view(RegulationView(Regulation, db.session, name="Quy định"))
 admin.add_view(UserView(User, db.session))
 admin.add_view(LogoutView(name='Đăng xuất'))

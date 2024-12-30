@@ -116,4 +116,88 @@ body {
     background-color: #28a745;
     transform: scale(1.05);
 }
+.hidden {
+    display: none;
+}
+
+
+Bạn có thể điều chỉnh phong cách hiển thị bằng cách thêm các thẻ HTML và áp dụng CSS để in đậm những phần cần thiết. Cụ thể, các thông tin như Bệnh Nhân, Triệu Chứng, Chẩn Đoán, và Thuốc có thể được hiển thị rõ ràng với chữ in đậm và phong cách chuyên nghiệp. Dưới đây là phiên bản cải tiến:
+
+JavaScript Cập Nhật
+javascript
+Copy code
+function showconsultation_formDetails(id) {
+    fetch(`/api/consultation_form/${id}`)
+        .then(response => response.json())
+        .then(data => {
+            // Hiển thị chi tiết
+            document.getElementById('consultation_form-details').style.display = 'block';
+            document.getElementById('consultation_form-list').style.display = 'none';
+
+            // Thêm thông tin bệnh nhân
+            document.getElementById('patient-name').innerHTML = `
+                <h3><strong>Bệnh Nhân:</strong> <span style="font-weight: bold; color: #333;">${data.patient_name}</span></h3>`;
+            document.getElementById('symptoms-detail').innerHTML = `
+                <p><strong>Triệu Chứng:</strong> <span style="font-weight: bold; color: #555;">${data.symptoms}</span></p>`;
+            document.getElementById('diagnosis-detail').innerHTML = `
+                <p><strong>Chẩn Đoán:</strong> <span style="font-weight: bold; color: #555;">${data.diagnosis}</span></p>`;
+
+            // Thêm thông tin thuốc
+            const medicationList = data.medications.map(med => `
+                <tr>
+                    <td style="font-weight: bold; color: #444;">${med.name}</td>
+                    <td style="font-weight: bold; color: #444;">${med.quantity}</td>
+                </tr>
+            `).join('');
+
+            document.getElementById('medication-detail').innerHTML = `
+                <h4><strong>Danh Sách Thuốc:</strong></h4>
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th style="font-weight: bold; color: #000;">Tên Thuốc</th>
+                            <th style="font-weight: bold; color: #000;">Số Lượng</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${medicationList}
+                    </tbody>
+                </table>
+            `;
+        })
+        .catch(error => {
+            console.error('Error fetching consultation form details:', error);
+        });
+}
+
+
+
+#consultation_form-details h3, #consultation_form-details h4 {
+    margin-bottom: 15px;
+    color: #000;
+}
+
+#consultation_form-details p {
+    margin-bottom: 10px;
+    font-size: 16px;
+    color: #555;
+}
+
+#consultation_form-details table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+#consultation_form-details table th,
+#consultation_form-details table td {
+    padding: 10px;
+    text-align: left;
+    border: 1px solid #ddd;
+}
+
+#consultation_form-details table th {
+    background-color: #f4f4f4;
+    font-weight: bold;
+}
 
