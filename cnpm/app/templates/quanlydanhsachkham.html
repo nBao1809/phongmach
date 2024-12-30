@@ -50,8 +50,8 @@
         const selectedDate = document.getElementById('selectDate').value;
 
         // Fetch danh sách bệnh nhân
-        const res = fetch(`/api/patients?date=${selectedDate}`)
-        const data = res.json()
+        const res = fetch(`/api/patients?date=${selectedDate}`);
+        const data = res.json();
 
         const tableBody = document.getElementById('patient-table-body');
         const patientList = document.getElementById('patient-list');

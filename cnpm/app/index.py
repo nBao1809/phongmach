@@ -97,8 +97,7 @@ def confirm_day():
         if patient['date'] == date:
             patient['confirmed'] = True
     return jsonify({"message": "All patients confirmed for the day"}), 200
-    max = int(datetime.now().year)
-    return render_template('datlich.html', today=today, max=max)
+
 
 
 # dat lich

@@ -17,9 +17,12 @@ class MyAdminIndexView(AdminIndexView):
 admin = Admin(app=app, name='Phòng mạch', template_mode='bootstrap4', index_view=MyAdminIndexView())
 
 
+
+
 class AdminView(ModelView):
     def is_accessible(self):
         return current_user.is_authenticated and current_user.user_role.__eq__(UserEnum.ADMIN)
+
 
 
 class UserView(AdminView):
@@ -31,7 +34,7 @@ class UserView(AdminView):
 
             # Gán vai trò mặc định nếu cần
             if not model.user_role:
-                model.user_role = UserEnum.USER
+                model.user_role = UserEnum.NURSE
         else:
             # Nếu người dùng đã tồn tại và thay đổi thông tin, hash lại mật khẩu nếu có thay đổi
             if form.password.data:
@@ -40,13 +43,14 @@ class UserView(AdminView):
         self.change = super().on_model_change(form, model, is_created)
         return self.change
 class MedicationView(AdminView):
-    column_list = ['name', 'price']
+    column_list = ['name', 'price','instructions']
     column_searchable_list = ['name']
-    column_editable_list = ['name','price']
+    column_editable_list = ['name','price','instructions']
     can_export = True
     column_labels = {
         'name':'Tên thuốc',
         'price':'Giá bán',
+        'instructions':'Cách sử dụng'
     }
 
 class PatientView(AdminView):
