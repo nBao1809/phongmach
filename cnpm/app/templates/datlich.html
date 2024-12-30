@@ -77,14 +77,15 @@
                 <label for="nu" class="form-check-label text-dark">Nữ</label>
             </div>
         </div>
-        <div class="mb-3 mt-3">
+
+        <div class="mb-3 mt-3 hidden isDatLich">
             <label for="ngayDatLich" class="form-label text-dark" style="font-weight: bold;">Ngày đặt lịch</label>
             <input type="date" class="form-control" id="ngayDatLich" name="ngayDatLich" required>
         </div>
         <div class="d-md-flex gap-2 justify-content-end">
             <button class="btn btn-secondary rounded-pill" type="button" onclick="resetForm()">Hủy</button>
             <button class="btn btn-primary rounded-pill" id="thembn" type="button" onclick="addPatient()">Thêm bệnh nhân</button>
-            <button class="btn btn-primary rounded-pill" id="huy" type="button" onclick="datLich()">Đặt lịch</button>
+            <button class="btn btn-primary rounded-pill hidden isDatLich" id="huy" type="button" onclick="datLich()">Đặt lịch</button>
         </div>
     </form>
 </div>

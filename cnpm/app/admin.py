@@ -31,7 +31,7 @@ class UserView(AdminView):
 
             # Gán vai trò mặc định nếu cần
             if not model.user_role:
-                model.user_role = UserEnum.USER
+                model.user_role = UserEnum.NURSE
         else:
             # Nếu người dùng đã tồn tại và thay đổi thông tin, hash lại mật khẩu nếu có thay đổi
             if form.password.data:

@@ -1,4 +1,4 @@
-// region  dat lich
+// region  đặt lịch
 const form = document.querySelector("form")
 const resultContainer = document.getElementById("resultContainer");
 const newPatientContainer = document.getElementById("newPatientContainer");
@@ -6,7 +6,7 @@ const newPatientContainer = document.getElementById("newPatientContainer");
 async function searchPatient() {
     const phone = document.getElementById("phone").value;
     try {
-        const res = await fetch(`/datlich/${phone}`);
+        const res = await fetch(`/api/datlich/${phone}`);
         // Kiểm tra xem phản hồi có thành công không
         if (!res.ok) {
             throw new Error("Có lỗi xảy ra khi tìm kiếm bệnh nhân.");
@@ -59,7 +59,9 @@ function usePatientInfo() {
     document.getElementById("nam").disabled = true;
     document.getElementById("nu").disabled = true;
     document.getElementById("thembn").disabled = true
-
+    //Hiện đặt lịch
+    const isDatLich = document.querySelectorAll(".isDatLich")
+    isDatLich.forEach(e => e.classList.remove("hidden"))
     // Hiển thị form mới (nếu cần)
     newPatientContainer.classList.remove("hidden");
 }
@@ -73,30 +75,14 @@ function resetSearch() {
     document.getElementById("phone1").readOnly = false;
     document.getElementById("namSinh").readOnly = false;
     document.getElementById("thembn").disabled = false
+    const isDatLich = document.querySelectorAll(".isDatLich")
+    document.getElementById('resultContainer').classList.add('hidden')
+    isDatLich.forEach(e => e.classList.add("hidden"))
     form.reset();
 }
 
 function resetForm() {
     resetSearch();
-}
-
-async function datLich() {
-    if (!form.checkValidity())
-        return
-    let date = document.getElementById("ngayDatLich").value
-    const res = await fetch('/api/datlich', {
-        method: 'POST',
-        body: JSON.stringify({
-            'date': date,
-            'patient_id': sessionStorage.getItem("patient_id")
-        }),
-        headers: {
-            'Content-Type': 'application/json'
-        }
-    })
-    const data = await res.json()
-    console.log(data)
-    alert("Đã đặt lịch thành công")
 }
 
 function addPatient() {
@@ -107,7 +93,7 @@ function addPatient() {
         gender: document.querySelector('input[name="gioiTinh"]:checked').value,
     };
 
-    fetch('/add_patient', {
+    fetch('/api/add_patient', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
@@ -134,5 +120,38 @@ function addPatient() {
             console.error('Lỗi khi fetch:', error);
             alert('Có lỗi xảy ra khi thêm bệnh nhân.');
         });
+    const isDatLich = document.querySelectorAll(".isDatLich")
+    isDatLich.forEach(e => e.classList.remove("hidden"))
 }
+
+async function datLich() {
+    if (!form.checkValidity())
+        return
+    let date = document.getElementById("ngayDatLich").value
+    const res = await fetch('/api/datlich', {
+        method: 'POST',
+        body: JSON.stringify({
+            'date': date,
+            'patient_id': sessionStorage.getItem("patient_id")
+        }),
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    const data = await res.json()
+    sessionStorage.removeItem("patient_id")
+    const isDatLich = document.querySelectorAll(".isDatLich")
+    isDatLich.forEach(e => e.classList.add("hidden"))
+    document.getElementById("nam").disabled = false;
+    document.getElementById("nu").disabled = false;
+    document.getElementById("Ten").readOnly = false;
+    document.getElementById("phone1").readOnly = false;
+    document.getElementById("namSinh").readOnly = false;
+    document.getElementById("thembn").disabled = false
+    resetForm()
+    if (data.success)
+        alert(data.success)
+    else alert(data.error)
+}
+
 //endregion
