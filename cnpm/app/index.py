@@ -1,5 +1,6 @@
 import hashlib
-from datetime import date, datetime
+from datetime import date
+from enum import Enum
 
 from flask import render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_user, logout_user, login_required
@@ -197,23 +198,38 @@ def update_patient(patient_id):
     return jsonify(result)
 
 
-@app.route('/api/get_bill')
+@app.route('/api/get_bill', methods=['GET', 'POST'])
 def get_all_bill():
-    bill=dao.get_bill()
+    bill = dao.get_all_bill()
     return jsonify(bill)
+
+
+@app.route('/api/confirm-bill/<int:bill_id>', methods=['GET', 'POST'])
+def confirm_bill(bill_id):
+    bill = dao.confirm_bill(bill_id)
+    return jsonify(bill)
+
 
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
         app.run(debug=True, port=5001)
         if not User.query.first():
-            u = User(name='a', username='a', password=str(hashlib.md5('123'.encode('utf-8')).hexdigest()),
+            u = User(name='Bao', username='admin', password=str(hashlib.md5('123'.encode('utf-8')).hexdigest()),
                      user_role=UserEnum.ADMIN)
+            u1 = User(name='Bác sĩ', username='dr', password=str(hashlib.md5('123'.encode('utf-8')).hexdigest()),
+                      user_role=UserEnum.DOCTOR)
+            u2 = User(name='Y tá', username='nu', password=str(hashlib.md5('123'.encode('utf-8')).hexdigest()),
+                      user_role=UserEnum.NURSE)
+            u3 = User(name='Thu ngân', username='ca', password=str(hashlib.md5('123'.encode('utf-8')).hexdigest()),
+                      user_role=UserEnum.CASHIER)
             db.session.add(u)
-            db.session.commit()
+            db.session.add(u1)
+            db.session.add(u2)
+            db.session.add(u3)
         if not Regulation.query.first():
             r = Regulation(name='Giới hạn bệnh nhân', regulation=40)
             r2 = Regulation(name='Tiền khám', regulation=100000)
             db.session.add(r)
             db.session.add(r2)
-            db.session.commit()
+        db.session.commit()

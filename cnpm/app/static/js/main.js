@@ -40,6 +40,7 @@ function usePatientInfo() {
     const phone = document.getElementById("resultPhone").innerText;
     const birthYear = document.getElementById("resultBirthYear").innerText;
     const gender = document.getElementById('resultGender').innerText;
+
     // Điền dữ liệu vào các ô nhập liệu
     document.getElementById("Ten").value = name;
     document.getElementById("phone1").value = phone;
@@ -113,8 +114,8 @@ function addPatient() {
                 document.getElementById("nam").disabled = true;
                 document.getElementById("nu").disabled = true;
             }
-            if(data.message)
-            alert(data.message);
+            if (data.message)
+                alert(data.message);
             else alert(data.error)
         })
         .catch(error => {
@@ -154,7 +155,158 @@ async function datLich() {
         alert(data.success)
     else alert(data.error)
 }
+
 //endregion
 // region Danh sách khám
+const tableBody = document.getElementById('patient-table-body');
+const patientList = document.getElementById('patient-list');
+
+
+    document.getElementById('form-select-date').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const selectedDate = document.getElementById('selectDate').value;
+        // Fetch danh sách bệnh nhân
+        const res = await
+            fetch(`/api/patients?date=${selectedDate}`)
+        const data = await res.json()
+        sessionStorage.setItem("currentList", JSON.stringify(data))
+        tableBody.innerHTML = '';
+        if (data.patients.length > 0) {
+            patientList.style.display = 'block';
+            data.patients.forEach((patient, index) => {
+                const row = `
+                            <tr itemid="patient-${patient.id}">
+                                <td>${index + 1}</td>
+                                <td><input type="text" id="name-${patient.id}" class="text-input" value="${patient.name}" readonly></td>
+                                <td><input type="date" class="text-input" id="birthday-${patient.id}" name="ngaySinh" value="${patient.birthday}" readonly disabled>
+                                </td>
+                                <td><input type="text" id="sdt-${patient.id}" class="text-input" value="${patient.sdt}" readonly></td>
+                                <td><select id="gender-${patient.id}" disabled>
+                                        <option value="nam" ${patient.gender === 'nam' ? 'selected' : ''}>Nam</option>
+                                        <option value="nữ" ${patient.gender === 'nữ' ? 'selected' : ''}>Nữ</option>
+                                </td>
+                                <td>
+                                <button class="btn btn-secondary hidden"  id="cancel-${patient.id}">Hủy</button>
+                                <button class="btn btn-sm btn-warning" id="btn-edit-${patient.id}" onclick="editPatient(${patient.id})">Sửa</button>
+                                <button class="btn btn-sm btn-danger" onclick="deletePatient(${patient.id})">Xóa</button>
+                            </td>
+                            </tr>`;
+                tableBody.insertAdjacentHTML('beforeend', row);
+            });
+        } else {
+            patientList.style.display = 'none';
+            alert('Không có bệnh nhân nào chưa xác nhận cho ngày này.');
+        }
+
+    });
+
+
+async function confirmDay() {
+    var isconfirm = confirm("Bạn muốn xác nhận toàn bộ lịch khám")
+    if (isconfirm) {
+        const selectedDate = document.getElementById('selectDate').value;
+        // Xác nhận toàn bộ danh sách của ngày
+        const res = await fetch(`/api/confirm-day?date=${selectedDate}`, {method: 'POST'})
+        const data = await res.json()
+        if (data.success) {
+            alert('Đã xác nhận toàn bộ danh sách khám ngày ' + selectedDate);
+            document.getElementById('form-select-date').submit(); // Làm mới giao diện
+            const toast = document.createElement('div');
+            toast.classList.add('alert', 'alert-success');
+            toast.textContent = 'Danh sách khám ngày ' + selectedDate + ' đã được xác nhận.';
+            document.body.appendChild(toast);
+        }
+    } else alert("Hủy xác nhận")
+}
+
+async function editPatient(id) {
+    // alert('Chức năng sửa bệnh nhân (ID: ' + id + ') chưa được triển khai.');
+    const btn = document.getElementById(`btn-edit-${id}`)
+    const input = document.querySelectorAll(`tr[itemid="patient-${id}"] .text-input`)
+
+    const btnCancel = document.getElementById(`cancel-${id}`)
+    const name = document.getElementById(`name-${id}`)
+    const birthday = document.getElementById(`birthday-${id}`)
+    const sdt = document.getElementById(`sdt-${id}`)
+    const gender = document.getElementById(`gender-${id}`)
+
+    const tempData = {
+        'id': id,
+        'name': name.value,
+        'birthday': birthday.value,
+        'sdt': sdt.value,
+        'gender': gender.value,
+    }
+    if (name.readOnly) {
+        for (const i of input) {
+            i.readOnly = false
+            gender.disabled = false;
+            birthday.disabled = false;
+        }
+        btnCancel.classList.remove("hidden")
+        btn.innerText = "Xong"
+    } else {
+        for (const i of input) {
+            i.readOnly = true
+            gender.disabled = true;
+            birthday.disabled = true;
+
+
+        }
+        btnCancel.classList.add("hidden")
+        btn.innerText = "Sửa"
+        const data = {
+            'id': id,
+            'name': name.value,
+            'birthday': birthday.value,
+            'sdt': sdt.value,
+            'gender': gender.value,
+        }
+        if (confirm('Bạn có chắc muốn sửa đổi bệnh nhân này?')) {
+            const res = await fetch(`/api/patient/${id}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                }
+            )
+            const dataRes = res.json()
+        }
+    }
+    btnCancel.addEventListener('click', () => {
+        name.value = tempData['name'];
+        birthday.value = tempData['birthday'];
+        sdt.value = tempData['sdt'];
+        gender.value = tempData['gender']
+        btnCancel.classList.add("hidden")
+        for (const i of input) {
+            i.readOnly = true
+            gender.disabled = true;
+            birthday.disabled = true;
+
+        }
+        btnCancel.classList.add("hidden")
+        btn.innerText = "Sửa"
+    })
+
+
+}
+
+async function deletePatient(id) {
+    if (confirm('Bạn có chắc muốn xóa bệnh nhân này?')) {
+        const res = await fetch(`/api/patient/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({'appointment_id': JSON.parse(sessionStorage.getItem("currentList")).appointment_id})
+            }
+        )
+        const data = await res.json()
+        alert(data.success);
+        tableBody.remove(document.querySelector(`#patient-${id}`))
+    }
+}
 
 //endregion

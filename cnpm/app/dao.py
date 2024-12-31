@@ -123,22 +123,32 @@ def update_patient(id, name, birthday, gender, sdt):
     return {'message': 'Bệnh nhân đã được sửa thành công!'}
 
 
-def get_bill():
-    bill_dict=[]
-    bills = (
-        db.session.query(Bill)
-        .join(Consultation_form, Bill.consultation_id == Consultation_form.id)
-        .join(Patient, Consultation_form.patient_id == Patient.id)
-        .all()
-    )
+def get_all_bill():
+    bill_dict={}
+    bills = Bill.query.all()
     for b in bills:
-        bill_dict[b.id]={
+        consultation=Consultation_form.query.get(b.consultation_id)
+        patient=Patient.query.get(consultation.patient_id)
+        bill_dict[b.id] = {
             'id': b.id,
-            'patient_name': b.consultation_form.patient.name,
-            'date': b.date,
+            'patient_name': patient.name,
+            'date': b.date.strftime("%Y-%m-%d %H:%M:%S"),
             'medication_fee': b.medication_fee,
             'consultation_fee': b.consultation_fee,
             'total': b.total,
             'status': b.status,
         }
+
     return bill_dict
+
+
+
+
+
+def confirm_bill(bill_id):
+    bill = Bill.query.get(bill_id)
+    if bill is None:
+        return {'error':"Lỗi khi xác nhận hóa đơn"}
+    bill.status = True
+    db.session.commit()
+    return {'success': "Xác nhận thành công hóa đơn"}

@@ -7,19 +7,38 @@
         <div class="collapse navbar-collapse" id="collapsibleNavbar">
             <ul class="navbar-nav me-auto">
                 <li class="nav-item">
-                    <a class="nav-link text-white"  href="/">Trang chủ</a>
+                    <a class="nav-link text-white" href="/">Trang chủ</a>
                 </li>
 
                 {% if current_user.is_authenticated %}
                 <li class="nav-item">
-                    <a class="nav-link text-danger" href="/">
-                        <img src="{{ current_user.avatar }}" width="25" class="rounded-circle" />
-                        Chào {{ current_user.username }}.
+                    <a class="nav-link text-white" href="/">
+                        Chào {{ current_user.name }}.
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link text-success" href="/logout">Đăng xuất</a>
                 </li>
+                {% if current_user.user_role.value == 'admin' %}
+                <li class="nav-item">
+                    <a class="nav-link text-white" href="/admin">Quản trị viên</a>
+                </li>
+                {% elif current_user.user_role.value == 'doctor' %}
+                <li class="nav-item">
+                    <a class="nav-link text-white" href="/quanlyphieukham">Trang bác sĩ</a>
+                </li>
+                {% elif current_user.user_role.value == 'nurse' %}
+                <li class="nav-item">
+                    <a class="nav-link text-white" href="/datlich">Đặt lịch</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-white" href="/quanlydanhsachkham">Danh sách khám bệnh</a>
+                </li>
+                {% elif current_user.user_role.value == 'cashier' %}
+                <li class="nav-item">
+                    <a class="nav-link text-white" href="/thanhtoan">Thanh toán</a>
+                </li>
+                {% endif %}
                 {% else %}
                 <li class="nav-item">
                     <a class="nav-link text-danger" href="/login">Đăng nhập</a>
