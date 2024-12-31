@@ -1,11 +1,13 @@
 import hashlib
-from datetime import date, datetime
+from datetime import date
+from enum import Enum
 
 from flask import render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_user, logout_user, login_required
+from sendSMS import sendSMS
 from app import app, dao, login, db
 import admin
-from app.models import UserEnum, Regulation, User, Appointment_list, Patient_Appointment, Patient, GenderEnum
+from app.models import UserEnum, Regulation, User, Appointment_list, Patient_Appointment, Patient, GenderEnum, Bill
 
 
 @app.route('/')
@@ -18,7 +20,7 @@ def get_user(user_id):
     return dao.get_user_by_id(user_id)
 
 
-@app.route("/login", methods=['get', 'post'])
+@app.route('/login', methods=['get', 'post'])
 def login_process():
     if request.method.__eq__('POST'):
         username = request.form.get('username')
@@ -33,83 +35,95 @@ def login_process():
     return render_template('login.html')
 
 
-@app.route("/logout")
+@app.route('/logout')
 def logout_process():
     logout_user()
     return redirect('/login')
 
 
-@app.route("/datlich")
+@app.route('/datlich')
+@login_required
 def datlich():
     today = date.today()
-
     return render_template('datlich.html', today=today)
 
 
-patients_data = [
-    {"id": 1, "full_name": "Nguyen Van A", "birth_date": "1985-01-01", "phone": "0901234567", "address": "Hà Nội",
-     "gender": "Nam", "date": "2024-12-26", "confirmed": False},
-    {"id": 2, "full_name": "Tran Thi B", "birth_date": "1990-02-15", "phone": "0912345678",
-     "address": "TP. Hồ Chí Minh", "gender": "Nữ", "date": "2024-12-26", "confirmed": False},
-    {"id": 3, "full_name": "Le Van C", "birth_date": "1988-05-10", "phone": "0934567890", "address": "Đà Nẵng",
-     "gender": "Nam", "date": "2024-12-27", "confirmed": False}
-]
+@app.route('/quanlydanhsachkham')
+@login_required
 
-
-@app.route("/quanlydanhsachkham")
 def quanlydanhsachkham():
-    available_dates = sorted(set(patient['date'] for patient in patients_data if not patient['confirmed']))
-    return render_template('quanlydanhsachkham.html', patients=[],available_dates=available_dates)
+    available_dates = dao.get_date()
+    return render_template('quanlydanhsachkham.html', available_dates=available_dates)
 
 
-@app.route("/quanlyphieukham")
+@app.route('/quanlyphieukham')
+@login_required
 def quanlyphieukham():
-    return  render_template('quanlyphieukham.html')
+    return render_template('quanlyphieukham.html')
 
 
-@app.route("/thanhtoan")
+@app.route('/thanhtoan')
+@login_required
 def thanhtoan():
     return render_template('thanhtoan.html')
 
 
-
 # API lấy danh sách bệnh nhân theo ngày
-@app.route('/api/patients')
+@app.route('/api/patients', methods=['GET', 'POST'])
+@login_required
 def get_patients():
     date = request.args.get('date')
-    filtered_patients = [p for p in patients_data if p['date'] == date and not p['confirmed']]
-    return jsonify({"patients": filtered_patients})
+    appointment = Appointment_list.query.filter_by(date=date).first()
+    patients = dao.get_all_patients(appointment)
+    return jsonify({'appointment_id': appointment.id, 'patients': patients})
 
 
 # API xóa bệnh nhân
 @app.route('/api/patient/<int:patient_id>', methods=['DELETE'])
+@login_required
 def delete_patient(patient_id):
-    global patients_data
-    patients_data = [p for p in patients_data if p['id'] != patient_id]
-    return jsonify({"message": "Deleted successfully"}), 204
+    data = request.get_json()
+    appointment_id = data.get('appointment_id')
+    result = dao.delete_patient_in_appointment(patient_id=patient_id, appointment_id=appointment_id)
+    if 'error' in result:
+        return jsonify(result)
+    else:
+        return jsonify(result)
+
 
 @app.route('/api/confirm-day', methods=['POST'])
+@login_required
 def confirm_day():
     date = request.args.get('date')
-    for patient in patients_data:
-        if patient['date'] == date:
-            patient['confirmed'] = True
-    return jsonify({"message": "All patients confirmed for the day"}), 200
-    max = int(datetime.now().year)
-    return render_template('datlich.html', today=today, max=max)
+    isConfirm = dao.confirm_appointment(date)
+    appointment = Appointment_list.query.filter_by(date=date).first()
+    patients = dao.get_all_patients(appointment)
+    error_msg = []
+    for patient in patients:
+        msg = f"Kính gửi Quý khách {patient['name']}, lịch hẹn của bạn vào ngày {appointment.date}. Vui lòng đến đúng lịch. Cảm ơn!"
+        # result=sendSMS(message=msg, number=patient.sdt)
+        # if result.get('error'):
+        #     error_msg.append({
+        #         'patient_name': patient.name,
+        #         'number': patient.sdt,
+        #         'error': result['error']
+        #     })
+        # return jsonify({'appointment_id': appointment.id, 'patients': error_msg})
+    return jsonify(isConfirm)
 
 
 # dat lich
-@app.route("/datlich/<string:phone>")
-def get_patient_by_phone_api(phone):
+@app.route('/api/datlich/<string:phone>')
+@login_required
+def get_patient_by_phone(phone):
     patient = dao.get_patient_by_phone(phone)
     if patient:
         return jsonify(patient.toDict())
     else:
-        return jsonify(error="patient not found"), 404
+        return jsonify(error='Không tìm thấy bệnh nhân'), 404
 
 
-@app.route("/login-admin", methods=['post'])
+@app.route('/login-admin', methods=['POST'])
 def login_admin_process():
     username = request.form.get('username')
     password = request.form.get('password')
@@ -120,87 +134,116 @@ def login_admin_process():
     return redirect('/admin')
 
 
-@app.route("/api/datlich", methods=['POST'])
+@app.route('/api/datlich', methods=['POST'])
+@login_required
 def api_datlich():
     date = request.get_json().get('date')  # Lấy ngày từ JSON
-    patient_id = request.get_json().get('patient_id')
-    limit_record = Regulation.query.filter(Regulation.name == "Giới hạn bệnh nhân").first()
-
+    patient_id = int(request.get_json().get('patient_id'))
+    limit_record = Regulation.query.filter(Regulation.name == 'Giới hạn bệnh nhân').first()
     if limit_record:
         limit = limit_record.regulation
     else:
-        return jsonify(error="Không tìm thấy quy định"), 404  # Trả về lỗi nếu không tìm thấy quy định
+        return jsonify(error='Không tìm thấy quy định'), 404  # Trả về lỗi nếu không tìm thấy quy định
 
     # Lấy cuộc hẹn cho ngày đã cho
     appointment = Appointment_list.query.filter(Appointment_list.date == date).first()
-
     if appointment:
         # Lấy danh sách bệnh nhân đã đặt cuộc hẹn cho cuộc hẹn này
         appointment_patients = Patient_Appointment.query.filter(
             Patient_Appointment.appointment_id == appointment.id).all()
-
+        # Kiểm tra xem bệnh nhân đã đặt lịch chưa
+        if any(ap.patient_id == patient_id for ap in appointment_patients):
+            return jsonify(error='Người này đã đặt lịch rồi'), 403
         if len(appointment_patients) < limit:
             ma = dao.make_appointment(appointment=appointment, patient_id=patient_id)  # Tạo cuộc hẹn mới
-            return jsonify(ma)
+            return jsonify(success='Đặt lịch thành công', appointment=ma), 200
         else:
-            return jsonify(error="Không còn trống lịch"), 403
+            return jsonify(error='ngày này đã đủ bệnh nhân'), 403
     else:
         # Nếu không có cuộc hẹn nào, thêm một cuộc hẹn mới
-        a = dao.add_appointment_list(date)  # Giả sử bạn cần truyền ngày vào hàm này
-        ma = dao.make_appointment(appointment=appointment, patient_id=patient_id)  # Tạo cuộc hẹn mới
-    return jsonify(ma)
+        a = dao.add_appointment_list(date)
+        ma = dao.make_appointment(appointment=a, patient_id=patient_id)  # Tạo cuộc hẹn mới
+    return jsonify(success='Đặt lịch thành công', appointment=ma), 200
 
 
-@app.route('/api/patient/', methods=['POST'])
+@app.route('/api/add_patient', methods=['POST'])
+@login_required
 def add_patient():
-    data = request.get_json()  # Lấy dữ liệu JSON từ yêu cầu
+    data = request.get_json()  # Nhận dữ liệu JSON từ yêu cầu
 
-    # Kiểm tra và lấy thông tin bệnh nhân
+    # Lấy thông tin bệnh nhân từ dữ liệu
     name = data.get('name')
+    phone = data.get('phone')
+    birth_year = data.get('birthYear')
     gender = data.get('gender')
+    if (gender == 'nam'):
+        genderValue = 'MALE'
+    else:
+        genderValue = 'FEMALE'
+    # Tạo đối tượng Patient
+    new_patient = Patient(name=name, gender=GenderEnum[genderValue], birthday=birth_year, sdt=phone)
+
+    isPatientExits = Patient.query.filter(Patient.sdt == new_patient.sdt).count() > 0
+    if isPatientExits:
+        return jsonify(error='bệnh nhân đã tồn tại'), 409
+    # Thêm vào cơ sở dữ liệu
+    db.session.add(new_patient)
+    db.session.commit()
+
+    return jsonify({'message': 'Bệnh nhân đã được thêm thành công!', 'id': new_patient.id}), 201
+
+
+@app.route('/api/patient/<int:patient_id>', methods=['PUT'])
+@login_required
+def update_patient(patient_id):
+    data = request.get_json()
+    id = patient_id
+    name = data.get('name')
     birthday = data.get('birthday')
     sdt = data.get('sdt')
+    gender = data.get('gender')
+    if (gender == 'nam'):
+        genderValue = 'MALE'
+    else:
+        genderValue = 'FEMALE'
+    result = dao.update_patient(id=id, name=name, birthday=birthday, gender=GenderEnum[genderValue], sdt=sdt)
+    return jsonify(result)
 
-    # Kiểm tra tính hợp lệ của dữ liệu
-    if not name or not gender or not birthday or not sdt:
-        return jsonify({"error": "Tất cả các trường đều là bắt buộc."}), 400
 
-    try:
-        # Tạo đối tượng Patient mới
-        new_patient = Patient(
-            name=name,
-            gender=GenderEnum(gender),
-            birthday=birthday,
-            sdt=sdt
-        )
+@app.route('/api/get_bill', methods=['GET', 'POST'])
+@login_required
+def get_all_bill():
+    bill = dao.get_all_bill()
+    return jsonify(bill)
 
-        # Thêm bệnh nhân vào cơ sở dữ liệu
-        dao.add_new_patient(new_patient)
 
-        return jsonify(new_patient.toDict()), 201  # Trả về thông tin bệnh nhân mới
-    except KeyError:
-        return jsonify({"error": "Giới tính không hợp lệ."}), 400
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500  # Xử lý lỗi khác
+@app.route('/api/confirm-bill/<int:bill_id>', methods=['GET', 'POST'])
+@login_required
+def confirm_bill(bill_id):
+    bill = dao.confirm_bill(bill_id)
+    return jsonify(bill)
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
-    u = User(name='admin', username='admin', password=str(hashlib.md5('123'.encode('utf-8')).hexdigest()),
-             user_role=UserEnum.ADMIN)
-    db.session.add(u)
-    db.session.commit()
-@app.before_first_request
-def before_first_request():
     with app.app_context():
+        db.create_all()
+        app.run(debug=True, port=5001)
         if not User.query.first():
-            u = User(name='admin', username='admin', password=str(hashlib.md5('123'.encode('utf-8')).hexdigest()),
+            u = User(name='Bao', username='admin', password=str(hashlib.md5('123'.encode('utf-8')).hexdigest()),
                      user_role=UserEnum.ADMIN)
-        db.session.add(u)
-        db.session.commit()
+            u1 = User(name='Bác sĩ', username='dr', password=str(hashlib.md5('123'.encode('utf-8')).hexdigest()),
+                      user_role=UserEnum.DOCTOR)
+            u2 = User(name='Y tá', username='nu', password=str(hashlib.md5('123'.encode('utf-8')).hexdigest()),
+                      user_role=UserEnum.NURSE)
+            u3 = User(name='Thu ngân', username='ca', password=str(hashlib.md5('123'.encode('utf-8')).hexdigest()),
+                      user_role=UserEnum.CASHIER)
+            db.session.add(u)
+            db.session.add(u1)
+            db.session.add(u2)
+            db.session.add(u3)
         if not Regulation.query.first():
-            r = Regulation(name="Giới hạn bệnh nhân", regulation=40)
-        r2 = Regulation(name="Tiền khám", regulation=100000)
-        db.session.add(r)
-        db.session.add(r2)
+            r = Regulation(name='Giới hạn bệnh nhân', regulation=40)
+            r2 = Regulation(name='Tiền khám', regulation=100000)
+            db.session.add(r)
+            db.session.add(r2)
         db.session.commit()

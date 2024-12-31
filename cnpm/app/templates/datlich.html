@@ -12,10 +12,6 @@
         padding: 30px;
         box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
     }
-
-    .hidden {
-        display: none;
-    }
 </style>
 
 <div class="container mt-5">
@@ -50,7 +46,7 @@
 
 <div id="newPatientContainer" class="container mt-3">
     <h5 class="text-dark text-primary mb-4">Nhập thông tin bệnh nhân mới</h5>
-    <form onsubmit="datLich(event)">
+    <form onsubmit="return false">
         <div class="mb-3 mt-3">
             <label for="Ten" class="form-label text-dark" style="font-weight: bold;">Họ Tên</label>
             <input type="text" class="form-control" id="Ten" placeholder="Họ Tên" required>
@@ -63,8 +59,8 @@
             </div>
         </div>
         <div class="mb-3 mt-3">
-            <label for="namSinh" class="form-label text-dark" style="font-weight: bold;">Năm sinh</label>
-            <input type="number" class="form-control" id="namSinh" placeholder="Nhập năm sinh" min="1900" required>
+            <label for="ngaySinh" class="form-label text-dark" style="font-weight: bold;">Ngày sinh</label>
+            <input type="date" class="form-control" id="ngaySinh"name="ngaySinh" required>
         </div>
         <div class="mb-3 mt-3">
             <label class="form-label text-dark" style="font-weight: bold;">Giới tính</label><br>
@@ -77,17 +73,16 @@
                 <label for="nu" class="form-check-label text-dark">Nữ</label>
             </div>
         </div>
-        <div class="mb-3 mt-3">
+
+        <div class="mb-3 mt-3 hidden isDatLich">
             <label for="ngayDatLich" class="form-label text-dark" style="font-weight: bold;">Ngày đặt lịch</label>
             <input type="date" class="form-control" id="ngayDatLich" name="ngayDatLich" required>
         </div>
-        <!--        <div class="d-grid gap-2">-->
-        <!--            <button class="btn btn-primary rounded-pill" type="submit">Đặt lịch</button>-->
-        <!--        </div>-->
         <div class="d-md-flex gap-2 justify-content-end">
             <button class="btn btn-secondary rounded-pill" type="button" onclick="resetForm()">Hủy</button>
-                        <button class="btn btn-primary rounded-pill" type="button" onclick="addPatient()">Thêm bệnh nhân</button>
-            <button class="btn btn-primary rounded-pill" type="submit">Đặt lịch</button>
+            <button class="btn btn-primary rounded-pill" id="thembn" type="button" onclick="addPatient()">Thêm bệnh nhân</button>
+            <button class="btn btn-primary rounded-pill hidden isDatLich" id="datLich" type="button" onclick="datLich()">Đặt lịch</button>
+
         </div>
     </form>
 </div>
