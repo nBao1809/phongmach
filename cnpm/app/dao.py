@@ -1,5 +1,7 @@
 import hashlib
 
+from flask import jsonify
+
 from app import db
 from app.models import User, Patient, Appointment_list, Patient_Appointment, Bill, Consultation_form
 
@@ -25,11 +27,18 @@ def get_patient_by_phone(phone):
 
 
 
+def add_new_patient(patient):
+    db.session.add(patient)
+    db.session.commit()
+    return patient  # Trả về đối tượng bệnh nhân đã được thêm
+
+
 def add_appointment_list(date):
     # Kiểm tra xem cuộc hẹn đã tồn tại cho ngày này chưa
     existing_appointment = Appointment_list.query.filter(Appointment_list.date == date).first()
     if existing_appointment:
         return existing_appointment
+
 
     # Tạo một đối tượng Appointment_list mới
     new_appointment = Appointment_list(date=date, status=0)
@@ -38,8 +47,11 @@ def add_appointment_list(date):
     db.session.add(new_appointment)
     db.session.commit()  # Lưu thay đổi vào cơ sở dữ liệu
 
-    return new_appointment  # Trả về đối tượng cuộc hẹn mới
-
+    return {
+        'id':new_appointment.id,
+        'date':new_appointment.date,
+        'status':new_appointment.status
+    }  # Trả về đối tượng cuộc hẹn mới
 
 def get_patient_appointment(patient_id, appointment_id):
     return Patient_Appointment.query.filter(
@@ -53,8 +65,9 @@ def make_appointment(patient_id, appointment):
         return {'error': 'Patient not found'}
     if not appointment:
         return {'error': 'Appointment not found'}
+
     # Tạo một đối tượng Patient_Appointment mới
-    new_patient_appointment = Patient_Appointment(appointment_id=appointment.id, patient_id=patient.id)
+    new_patient_appointment =Patient_Appointment(appointment_id=appointment.id, patient_id=patient_id)
 
     # Thêm đối tượng vào cơ sở dữ liệu
     db.session.add(new_patient_appointment)

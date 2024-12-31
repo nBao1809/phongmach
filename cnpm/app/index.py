@@ -42,29 +42,35 @@ def logout_process():
 
 
 @app.route('/datlich')
+@login_required
 def datlich():
     today = date.today()
     return render_template('datlich.html', today=today)
 
 
 @app.route('/quanlydanhsachkham')
+@login_required
+
 def quanlydanhsachkham():
     available_dates = dao.get_date()
     return render_template('quanlydanhsachkham.html', available_dates=available_dates)
 
 
 @app.route('/quanlyphieukham')
+@login_required
 def quanlyphieukham():
     return render_template('quanlyphieukham.html')
 
 
 @app.route('/thanhtoan')
+@login_required
 def thanhtoan():
     return render_template('thanhtoan.html')
 
 
 # API lấy danh sách bệnh nhân theo ngày
 @app.route('/api/patients', methods=['GET', 'POST'])
+@login_required
 def get_patients():
     date = request.args.get('date')
     appointment = Appointment_list.query.filter_by(date=date).first()
@@ -74,6 +80,7 @@ def get_patients():
 
 # API xóa bệnh nhân
 @app.route('/api/patient/<int:patient_id>', methods=['DELETE'])
+@login_required
 def delete_patient(patient_id):
     data = request.get_json()
     appointment_id = data.get('appointment_id')
@@ -85,6 +92,7 @@ def delete_patient(patient_id):
 
 
 @app.route('/api/confirm-day', methods=['POST'])
+@login_required
 def confirm_day():
     date = request.args.get('date')
     isConfirm = dao.confirm_appointment(date)
@@ -106,6 +114,7 @@ def confirm_day():
 
 # dat lich
 @app.route('/api/datlich/<string:phone>')
+@login_required
 def get_patient_by_phone(phone):
     patient = dao.get_patient_by_phone(phone)
     if patient:
@@ -126,6 +135,7 @@ def login_admin_process():
 
 
 @app.route('/api/datlich', methods=['POST'])
+@login_required
 def api_datlich():
     date = request.get_json().get('date')  # Lấy ngày từ JSON
     patient_id = int(request.get_json().get('patient_id'))
@@ -157,6 +167,7 @@ def api_datlich():
 
 
 @app.route('/api/add_patient', methods=['POST'])
+@login_required
 def add_patient():
     data = request.get_json()  # Nhận dữ liệu JSON từ yêu cầu
 
@@ -183,6 +194,7 @@ def add_patient():
 
 
 @app.route('/api/patient/<int:patient_id>', methods=['PUT'])
+@login_required
 def update_patient(patient_id):
     data = request.get_json()
     id = patient_id
@@ -199,12 +211,14 @@ def update_patient(patient_id):
 
 
 @app.route('/api/get_bill', methods=['GET', 'POST'])
+@login_required
 def get_all_bill():
     bill = dao.get_all_bill()
     return jsonify(bill)
 
 
 @app.route('/api/confirm-bill/<int:bill_id>', methods=['GET', 'POST'])
+@login_required
 def confirm_bill(bill_id):
     bill = dao.confirm_bill(bill_id)
     return jsonify(bill)

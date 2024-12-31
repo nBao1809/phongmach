@@ -310,3 +310,4 @@ async function deletePatient(id) {
 }
 
 //endregion
+
