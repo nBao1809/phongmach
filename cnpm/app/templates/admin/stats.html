@@ -1,0 +1,219 @@
+{% extends 'admin/master.html' %}
+
+{% block body %}
+<h1 class="text-danger text-center mt-1">THỐNG KÊ BÁO CÁO</h1>
+
+<!-- Chọn tháng -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <label for="monthSelect" class="form-label text-dark" style="font-weight: bold;">Chọn Tháng</label>
+        <select class="form-control" id="monthSelect">
+            <!-- Các tháng và năm có hóa đơn sẽ được hiển thị ở đây -->
+        </select>
+    </div>
+    <div class="col-md-3">
+        <button class="btn btn-primary mt-4" onclick="loadData()">Lọc</button>
+    </div>
+</div>
+
+<!-- Thống kê Doanh Thu -->
+<h3 class="text-center">BÁO CÁO DOANH THU THEO THÁNG</h3>
+<div class="row">
+    <div class="col-md-12">
+        <canvas id="revenueChart"></canvas>
+    </div>
+</div>
+<!-- Bảng doanh thu -->
+<table class="table table-bordered mt-4">
+    <thead>
+    <tr>
+        <th>STT</th>
+        <th>Ngày</th>
+        <th>Số bệnh nhân</th>
+        <th>Doanh thu</th>
+        <th>Tỷ lệ</th>
+    </tr>
+    </thead>
+    <tbody id="revenueData">
+    <!-- Dữ liệu doanh thu sẽ được thêm vào đây từ API -->
+    </tbody>
+</table>
+<h5 id="totalRevenue"></h5> <!-- Hiển thị tổng doanh thu -->
+
+<!-- Thống kê Sử Dụng Thuốc -->
+<h3 class="text-center">BÁO CÁO SỬ DỤNG THUỐC</h3>
+<div class="row">
+    <div class="col-md-12">
+        <canvas id="medicationChart"></canvas>
+    </div>
+</div>
+<!-- Bảng thuốc sử dụng -->
+<table class="table table-bordered mt-4">
+    <thead>
+    <tr>
+        <th>STT</th>
+        <th>Thuốc</th>
+        <th>Đơn vị tính</th>
+        <th>Số lượng</th>
+        <th>Số lần dùng</th>
+    </tr>
+    </thead>
+    <tbody id="medicationData">
+    <!-- Dữ liệu thuốc sẽ được thêm vào đây từ API -->
+    </tbody>
+</table>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Biến toàn cục để lưu đối tượng biểu đồ
+    let revenueChartInstance = null;
+    let medicationChartInstance = null;
+
+    // Lấy các tháng và năm hợp lệ từ API và cập nhật lại select box
+    function loadAvailableMonths() {
+        fetch('/get_available_months')
+            .then(response => response.json())
+            .then(months => {
+                const monthSelect = document.getElementById('monthSelect');
+                monthSelect.innerHTML = ''; // Xóa tất cả các tùy chọn
+
+                if (months.length === 0) {
+                    const option = document.createElement('option');
+                    option.textContent = 'Không có dữ liệu hóa đơn';
+                    monthSelect.appendChild(option);
+                    return;
+                }
+
+                months.forEach(month => {
+                    const option = document.createElement('option');
+                    option.value = `${month.month}-${month.year}`;
+                    option.textContent = `Tháng ${month.month} - ${month.year}`;
+                    monthSelect.appendChild(option);
+                });
+            })
+            .catch(error => console.error('Error fetching available months:', error));
+    }
+
+    // Hủy bỏ biểu đồ cũ
+    function destroyChart(chartInstance) {
+        if (chartInstance) {
+            chartInstance.destroy();
+        }
+    }
+
+    // Hàm tải dữ liệu
+    function loadData() {
+        const selectedMonthYear = document.getElementById('monthSelect').value;
+        if (!selectedMonthYear) {
+            alert('Vui lòng chọn tháng!');
+            return;
+        }
+
+        const [selectedMonth, selectedYear] = selectedMonthYear.split('-'); // Tách tháng và năm từ giá trị
+
+        // Gọi API để lấy dữ liệu doanh thu
+        fetch(`/revenue_data?month=${selectedMonth}&year=${selectedYear}`)
+            .then(response => response.json())
+            .then(data => {
+                const revenueData = data.revenueData;
+                const revenueLabels = data.revenueLabels;
+                const patientCounts = data.patientCounts;
+
+                // Cập nhật biểu đồ doanh thu
+                const revenueCtx = document.getElementById('revenueChart');
+                destroyChart(revenueChartInstance);
+                revenueChartInstance = new Chart(revenueCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: revenueLabels,
+                        datasets: [{
+                            label: 'Doanh thu',
+                            data: revenueData,
+                            backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#FF9F40', '#FFCD56'],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: { position: 'top' },
+                            title: { display: true, text: `Thống kê Doanh Thu Tháng ${selectedMonth}` }
+                        }
+                    }
+                });
+
+                // Cập nhật bảng doanh thu
+                const revenueTable = document.getElementById('revenueData');
+                revenueTable.innerHTML = ''; // Xóa bảng cũ
+                revenueData.forEach((revenue, index) => {
+                    const row = `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td>${revenueLabels[index]}</td>
+                            <td>${patientCounts[index]}</td>
+                            <td>${revenue} VND</td>
+                            <td>${(revenue / revenueData.reduce((sum, value) => sum + value, 0) * 100).toFixed(2)}%</td>
+                        </tr>
+                    `;
+                    revenueTable.insertAdjacentHTML('beforeend', row);
+                });
+
+                // Tính tổng doanh thu
+                const totalRevenue = revenueData.reduce((sum, value) => sum + value, 0);
+                document.getElementById('totalRevenue').innerText = `Tổng doanh thu: ${totalRevenue} VND`;
+
+                // Gọi API để lấy dữ liệu sử dụng thuốc
+                fetch(`/medication_usage_data?month=${selectedMonth}&year=${selectedYear}`)
+                    .then(response => response.json())
+                    .then(medicationData => {
+                    console.log('Medication Data:', medicationData);
+                        const medicationTable = document.getElementById('medicationData');
+                        medicationTable.innerHTML = ''; // Xóa bảng cũ
+                        medicationData.forEach((medication, index) => {
+                            const row = `
+                                <tr>
+                                    <td>${index + 1}</td>
+                                    <td>${medication.name}</td>
+                                    <td>${medication.unit}</td>
+                                    <td>${medication.quantity}</td>
+                                    <td>${medication.usage_count}</td>
+                                </tr>
+                            `;
+                            medicationTable.insertAdjacentHTML('beforeend', row);
+                        });
+
+                        // Cập nhật biểu đồ sử dụng thuốc
+                        const medicationCtx = document.getElementById('medicationChart');
+                        destroyChart(medicationChartInstance);
+                        medicationChartInstance = new Chart(medicationCtx, {
+                            type: 'bar',
+                            data: {
+                                labels: medicationData.map(med => med.name),
+                                datasets: [{
+                                    label: 'Số lượng thuốc sử dụng',
+                                    data: medicationData.map(med => med.quantity),
+                                    backgroundColor: '#FF9F40',
+                                    borderWidth: 1
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                plugins: {
+                                    legend: { position: 'top' },
+                                    title: { display: true, text: `Báo cáo Sử Dụng Thuốc Tháng ${selectedMonth}` }
+                                }
+                            }
+                        });
+                    })
+                    .catch(error => console.error('Error fetching medication usage data:', error));
+            })
+            .catch(error => console.error('Error fetching revenue data:', error));
+    }
+
+    // Tải dữ liệu ban đầu khi trang được load
+    window.onload = () => {
+        loadAvailableMonths(); // Lấy các tháng có sẵn
+        loadData(); // Lấy dữ liệu cho tháng mặc định (nếu có)
+    };
+</script>
+{% endblock %}

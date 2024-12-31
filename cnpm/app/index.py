@@ -4,6 +4,7 @@ from datetime import date, datetime
 from flask import render_template, request, redirect, url_for, flash, jsonify
 from flask_login import login_user, logout_user, login_required
 from pyexpat.errors import messages
+from sqlalchemy import func
 
 from app import app, dao, login, db
 import admin
@@ -264,7 +265,7 @@ def manage_consultation_form():
             'id': p.id,
             'date': p.date.strftime('%Y-%m-%d'),
             'patient_id': p.patient_id,
-            'patient_name':Patient.query.get(p.patient_id).name,
+            'patient_name': Patient.query.get(p.patient_id).name,
             'symptoms': p.symptoms,
             'diagnosis': p.diagnosis
         } for p in consultation_form])
@@ -329,7 +330,125 @@ def delete_prescription(id):
     return jsonify({'success': True}), 200
 
 
+@app.route('/get_available_months', methods=['GET'])
+def get_available_months():
+    # Truy vấn các tháng và năm có hóa đơn từ cơ sở dữ liệu
+    months = db.session.query(func.extract('month', Bill.date).label('month'),
+                              func.extract('year', Bill.date).label('year')) \
+        .distinct().all()
 
+    # Chuyển đổi kết quả thành danh sách tháng-năm
+    available_months = [{'month': int(month[0]), 'year': int(month[1])} for month in months]
+
+    return jsonify(available_months)
+
+
+from flask import jsonify, request
+from datetime import datetime
+from sqlalchemy import func
+
+
+@app.route('/revenue_data', methods=['GET'])
+def get_revenue_data():
+    month = request.args.get('month', type=int)
+    year = request.args.get('year', type=int)
+
+    # Lấy ngày đầu và cuối của tháng
+    start_date = datetime(year, month, 1)
+    if month == 12:
+        end_date = datetime(year + 1, 1, 1)  # Ngày đầu tháng 1 năm sau
+    else:
+        end_date = datetime(year, month + 1, 1)  # Ngày đầu tháng sau
+
+    # Lấy dữ liệu hóa đơn theo ngày
+    bills = Bill.query.filter(Bill.status == "0", Bill.date >= start_date, Bill.date < end_date).all()
+
+    # Tính toán tổng doanh thu và số bệnh nhân theo ngày
+    revenue_data = {}
+    for bill in bills:
+        bill_date = bill.date.date()  # Lấy ngày từ datetime
+        if bill_date not in revenue_data:
+            revenue_data[bill_date] = {
+                'total_revenue': 0,
+                'patient_count': 0
+            }
+        revenue_data[bill_date]['total_revenue'] += bill.total
+        revenue_data[bill_date]['patient_count'] += 1  # Giả sử mỗi hóa đơn tương ứng với một bệnh nhân
+
+    # Chuyển đổi dữ liệu thành định dạng phù hợp cho biểu đồ và bảng
+    revenue_labels = []
+    revenue_values = []
+    patient_counts = []
+
+    for date, data in sorted(revenue_data.items()):
+        revenue_labels.append(date.strftime('%Y-%m-%d'))
+        revenue_values.append(data['total_revenue'])
+        patient_counts.append(data['patient_count'])
+
+    return jsonify({
+        'revenueData': revenue_values,
+        'revenueLabels': revenue_labels,
+        'patientCounts': patient_counts
+    })
+
+
+from flask import jsonify, request
+from sqlalchemy import func
+
+
+@app.route('/medication_usage_data', methods=['GET'])
+def get_medication_usage_data():
+    try:
+        # Lấy tháng và năm từ query params
+        month = request.args.get('month', type=int)
+        year = request.args.get('year', type=int)
+
+        # Kiểm tra tháng và năm hợp lệ
+        if not month or not year:
+            return jsonify({'error': 'Tháng và năm không hợp lệ'}), 400
+
+        # Lấy ngày đầu và cuối của tháng
+        start_date = datetime(year, month, 1)
+        if month == 12:
+            end_date = datetime(year + 1, 1, 1)  # Ngày đầu tháng 1 năm sau
+        else:
+            end_date = datetime(year, month + 1, 1)  # Ngày đầu tháng sau
+
+        # Lấy danh sách hóa đơn có status=False (Boolean)
+        bills = Bill.query.filter(Bill.status == "0", Bill.date >= start_date, Bill.date < end_date).all()
+
+        if not bills:
+            return jsonify({'error': 'Không có hóa đơn nào phù hợp'}), 404  # Thêm điều kiện này để kiểm tra
+
+        # Khởi tạo một dictionary để lưu trữ số lượng thuốc
+        medication_usage = {}
+
+        for bill in bills:
+            consultation = Consultation_form.query.get(bill.consultation_id)
+            if consultation:
+                if consultation.date.month == int(month) and consultation.date.year == int(year):
+                    for medication_consultation in consultation.medication_consultations:
+                        medication = Medication.query.get(medication_consultation.medication_id)
+                        if medication:
+                            if medication.id not in medication_usage:
+                                medication_usage[medication.id] = {
+                                    'name': medication.name,
+                                    'unit': medication.medication_unit_name,
+                                    'quantity': 0,
+                                    'usage_count': 0
+                                }
+                            medication_usage[medication.id]['quantity'] += medication_consultation.quantity
+                            medication_usage[medication.id]['usage_count'] += 1
+
+        # Chuyển đổi dữ liệu thành danh sách để trả về
+        medication_data = [
+            {'name': data['name'], 'unit': data['unit'], 'quantity': data['quantity'], 'usage_count': data['usage_count']}
+            for data in medication_usage.values()]
+
+        return jsonify(medication_data)
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 
 

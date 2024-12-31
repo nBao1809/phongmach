@@ -338,6 +338,7 @@ document.getElementById('consultation-form').addEventListener('submit', function
             .then(billData => {
                 if (billData.success) {
                     alert('Hóa đơn đã được tạo thành công!');
+                    loadPrescriptions();
                 } else {
                     alert('Có lỗi xảy ra khi tạo hóa đơn: ' + billData.message);
                 }

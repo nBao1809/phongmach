@@ -1,7 +1,10 @@
 import hashlib
 
+from flask import jsonify
+from sqlalchemy import extract
+
 from app import db
-from app.models import User, Patient, Appointment_list, Patient_Appointment, Consultation_form
+from app.models import User, Patient, Appointment_list, Patient_Appointment, Consultation_form, Bill
 
 
 def auth_user(username, password, role=None):
@@ -179,6 +182,9 @@ def confirm_appointment(date):
     appointments.status = True
     db.session.commit()
     return {'success': True}
+
+
+
 
 
 def get_patient_by_id(id):

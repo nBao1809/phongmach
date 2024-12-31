@@ -112,6 +112,12 @@ class LogoutView(AuthenticatedView):
         return redirect('/admin')
 
 
+class StatsView(AuthenticatedView):
+    @expose("/")
+    def index(self):
+        return self.render('admin/stats.html')
+
+
 with app.app_context():
     admin.add_view(MedicationView(Medication, db.session, name='Thuốc'))
 admin.add_view(PatientView(Patient, db.session, name="Bệnh nhân"))
@@ -119,3 +125,4 @@ admin.add_view(Medication_unitsView(Medication_units, db.session, name="Đơn v�
 admin.add_view(RegulationView(Regulation, db.session, name="Quy định"))
 admin.add_view(UserView(User, db.session))
 admin.add_view(LogoutView(name='Đăng xuất'))
+admin.add_view(StatsView(name='Thống kê - báo cáo'))
